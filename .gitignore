@@ -1,0 +1,7 @@
+.idea/
+.git/
+*.iml
+cmake-build-debug/
+flatcam_pcb_maker
+test.txt
+.files/
