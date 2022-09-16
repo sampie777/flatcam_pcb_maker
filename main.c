@@ -1,103 +1,186 @@
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+#define _GNU_SOURCE
+
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include "common.h"
+#include "terminal_utils.h"
+#include "screen.h"
+#include "file_utils.h"
+#include "utils.h"
 
-struct ScreenConfig {
-    int row_count;
-    int column_count;
-};
-
-/*** terminal ***/
-
-void clearScreen() {
-    write(STDOUT_FILENO, "\x1b[2J", 4);
-    write(STDOUT_FILENO, "\x1b[H", 3);  // Move cursor to 1,1
-}
-
-void die(const char *s) {
-    clearScreen();
-
-    perror(s);
-    exit(1);
-}
-
-void disableRawMode() {
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.original_termios_state) == -1)
-        die("Failed to disable raw mode");
-}
-
-void enableRawMode() {
-    struct termios new_state;
-    if (tcgetattr(STDIN_FILENO, &E.original_termios_state) == -1)
-        die("Failed to get original terminal attributes");
-    atexit(disableRawMode);
-
-    // Shallow clone of the struct
-    new_state = E.original_termios_state;
-
-    // Turn off the terminal's default echo back of input characters: ECHO
-    // Also enable direct character input instead of waiting for ENTER: ICANON
-    // Disable Ctrl+C commands: ISIG
-    // Disable Ctrl+V commands: IEXTEN
-    // Disable Ctrl+S commands: IXON
-    // Disable Ctrl+M commands: ICRNL
-    // Disable output processing of \n and \r: OPOST
-    new_state.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
-    new_state.c_iflag &= ~(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
-    new_state.c_oflag &= ~(OPOST);
-    new_state.c_cflag |= CS8;
-
-    new_state.c_cc[VMIN] = 0;   // Min bytes to read for read()
-    new_state.c_cc[VTIME] = 1;  // Max timeout in 100 ms for read()
-
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_state) == -1)
-        die("Failed to apply new terminal attributes");
-}
-
-int getCursorPosition(int *row, int *col) {
-    char buff[32];
-    unsigned int i = 0;
-
-    if (write(STDOUT_FILENO, "\x1b[6n", 4) != 4)
-        return -1;
-
-    while (i < sizeof(buff) - 1) {
-        if (read(STDIN_FILENO, &buff[i], 1) != 1)
+void selection_increase(AppState *state, int value) {
+    switch (state->screen) {
+        case SCREEN_SELECT_PROJECT:
+            state->project_selection += value;
             break;
-        if (buff[i] == 'R')
+        case SCREEN_SELECT_ACTION:
+            state->action_selection += value;
             break;
-        i++;
+        case SCREEN_GENERATE_FLATCAM:
+            state->flatcam_option_selection += value;
+            break;
     }
-    buff[i] = '\0'; // Close string
-
-    // Parse buffer
-    if (buff[0] != '\x1b' || buff[1] != '[')
-        return -1;
-    if (sscanf(&buff[2], "%d;%d", row, col) != 2)
-        return -1;
-
-    return 0;
 }
 
-int getWindowSize(int *rows, int *cols) {
-    struct winsize ws;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
-        if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) {
-            return -1;
+void show_dialog(AppState *state, const char *title, const char *default_value, char *destination, int max_length) {
+    state->dialog.show = 1;
+    strcpy(state->dialog.title, title);
+    strcpy(state->dialog.default_value, default_value);
+    memset(state->dialog.value, '\0', strlen(state->dialog.value));
+    state->dialog.destination = destination;
+    state->dialog.max_length = max_length;
+}
+
+void confirm_selection(AppState *state) {
+    if (state->dialog.show) {
+        if (strlen(state->dialog.value) > 0) {
+            strcpy(state->dialog.destination, state->dialog.value);
         }
-        return getCursorPosition(rows, cols);
+        state->dialog.show = 0;
+        return;
     }
 
-    *rows = ws.ws_row;
-    *cols = ws.ws_col;
-    return 0;
+    switch (state->screen) {
+        case SCREEN_SELECT_PROJECT: {
+            size_t size = strlen(state->projects[state->project_selection]) * sizeof(char);
+            state->project = malloc(size + 1);
+            strcpy(state->project, state->projects[state->project_selection]);
+            state->project[size] = '\0';
+            state->screen = SCREEN_SELECT_ACTION;
+            break;
+        }
+        case SCREEN_SELECT_ACTION: {
+            switch (state->action_selection) {
+                case ACTION_GENERATE_FLATCAM_CODE:
+                    state->screen = SCREEN_GENERATE_FLATCAM;
+                    state->flatcam_option_selection = FLATCAM_BUTTON_GENERATE;
+                    break;
+                case ACTION_SHOW_CHECKLIST:
+                    state->screen = SCREEN_SHOW_CHECKLIST;
+                    break;
+            }
+            break;
+        }
+        case SCREEN_SHOW_CHECKLIST: {
+            state->screen = SCREEN_SELECT_ACTION;
+            break;
+        }
+        case SCREEN_GENERATE_FLATCAM: {
+            switch (state->flatcam_option_selection) {
+                case FLATCAM_COPPER_LAYER:
+                    show_dialog(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces[0]), 1);
+                    break;
+                case FLATCAM_OFFSET_X:
+                    show_dialog(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7);
+                    break;
+                case FLATCAM_OFFSET_Y:
+                    show_dialog(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7);
+                    break;
+                case FLATCAM_DIA_WIDTH:
+                    show_dialog(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9);
+                    break;
+                case FLATCAM_FEEDRATE:
+                    show_dialog(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7);
+                    break;
+                case FLATCAM_SILKSCREEN_TOP:
+                    show_dialog(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top[0]), 1);
+                    break;
+                case FLATCAM_SILKSCREEN_BOTTOM:
+                    show_dialog(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom[0]), 1);
+                    break;
+                case FLATCAM_BUTTON_GENERATE:
+                    // ...
+                    state->flatcam_option_selection = FLATCAM_BUTTON_BACK;
+                    break;
+                case FLATCAM_BUTTON_BACK:
+                    state->screen = SCREEN_SELECT_ACTION;
+                    break;
+            }
+            break;
+        }
+    }
+}
+
+void editorProcessKeypress(AppState *state) {
+    int c = editorReadKey();
+
+    switch (c) {
+        case '\r':  // ENTER key
+            confirm_selection(state);
+            break;
+        case CTRL_KEY('q'):
+            clearScreen();
+            exit(0);
+        case ARROW_UP:
+            selection_increase(state, -1);
+            break;
+        case ARROW_LEFT:
+        case ARROW_DOWN:
+            selection_increase(state, 1);
+            break;
+        case ARROW_RIGHT:
+            break;
+        case BACKSPACE:
+            if (state->dialog.show) {
+                int length = strlen(state->dialog.value);
+                if (length > 0) {
+                    state->dialog.value[length - 1] = '\0';
+                }
+            }
+            break;
+        case CTRL_KEY('h'):
+        case DELETE_KEY:
+            break;
+        case CTRL_KEY('l'):
+        case '\x1b': {   // ESCAPE key
+            state->dialog.show = 0;
+            break;
+        }
+        default:
+            if (state->dialog.show) {
+                int length = strlen(state->dialog.value);
+                if (length < 63 && length < state->dialog.max_length) {
+                    state->dialog.value[length] = (char) c;
+                    state->dialog.value[length + 1] = '\0';
+                }
+            }
+            break;
+    }
+}
+
+void app_control(AppState *state) {
+    state->project_selection = bound(state->project_selection, 0, state->projects_count - 1);
+    state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1);
+    state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1);
 }
 
 int main() {
-    struct ScreenConfig screen = {};
+    AppState state = {
+            .flatcam_options.traces = "T",
+            .flatcam_options.offset_x = "20",
+            .flatcam_options.offset_y = "29",
+            .flatcam_options.dia_width = "0.20188",
+            .flatcam_options.feedrate_etch = "1400",
+            .flatcam_options.silkscreen_top = "N",
+            .flatcam_options.silkscreen_bottom = "N",
+    };
+
     enableRawMode();
 
-    if (getWindowSize(&screen.row_count, &screen.column_count) == -1)
+    if (getWindowSize(&state.row_count, &state.column_count) == -1)
         die("Failed to get window size");
 
-    printf("Hello, World!\n");
+
+    files_get_all_projects(PROJECTS_PATH, &state.projects, &state.projects_count);
+
+    while (1) {
+        app_control(&state);
+        screen_refresh(&state);
+        editorProcessKeypress(&state);
+    }
+
     return 0;
 }
