@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 #include "common.h"
 #include "terminal_utils.h"
 #include "screen.h"
@@ -23,6 +24,20 @@ void selection_increase(AppState *state, int value) {
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection += value;
+            break;
+    }
+}
+
+void selection_set(AppState *state, int value) {
+    switch (state->screen) {
+        case SCREEN_SELECT_PROJECT:
+            state->project_selection = value;
+            break;
+        case SCREEN_SELECT_ACTION:
+            state->action_selection = value;
+            break;
+        case SCREEN_GENERATE_FLATCAM:
+            state->flatcam_option_selection = value;
             break;
     }
 }
@@ -143,6 +158,8 @@ void editorProcessKeypress(AppState *state) {
                     state->dialog.value[length] = (char) c;
                     state->dialog.value[length + 1] = '\0';
                 }
+            } else if (c >= 48 && c < 58) {
+                selection_set(state, c - 48);
             }
             break;
     }
