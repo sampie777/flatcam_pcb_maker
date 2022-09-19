@@ -10,6 +10,7 @@
 #include "screen.h"
 #include "file_utils.h"
 #include "utils.h"
+#include "dialog.h"
 
 void selection_increase(AppState *state, int value) {
     switch (state->screen) {
@@ -25,21 +26,13 @@ void selection_increase(AppState *state, int value) {
     }
 }
 
-void show_dialog(AppState *state, const char *title, const char *default_value, char *destination, int max_length) {
-    state->dialog.show = 1;
-    strcpy(state->dialog.title, title);
-    strcpy(state->dialog.default_value, default_value);
-    memset(state->dialog.value, '\0', strlen(state->dialog.value));
-    state->dialog.destination = destination;
-    state->dialog.max_length = max_length;
+void flatcam_screen_dialog_callback(AppState *state) {
+    state->flatcam_option_selection++;
 }
 
 void confirm_selection(AppState *state) {
     if (state->dialog.show) {
-        if (strlen(state->dialog.value) > 0) {
-            strcpy(state->dialog.destination, state->dialog.value);
-        }
-        state->dialog.show = 0;
+        dialog_confirm(state);
         return;
     }
 
@@ -71,25 +64,25 @@ void confirm_selection(AppState *state) {
         case SCREEN_GENERATE_FLATCAM: {
             switch (state->flatcam_option_selection) {
                 case FLATCAM_COPPER_LAYER:
-                    show_dialog(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces[0]), 1);
+                    dialog_show_with_callback(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces[0]), 1, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_OFFSET_X:
-                    show_dialog(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7);
+                    dialog_show_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_OFFSET_Y:
-                    show_dialog(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7);
+                    dialog_show_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_DIA_WIDTH:
-                    show_dialog(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9);
+                    dialog_show_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_FEEDRATE:
-                    show_dialog(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7);
+                    dialog_show_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
-                    show_dialog(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top[0]), 1);
+                    dialog_show_with_callback(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top[0]), 1, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_SILKSCREEN_BOTTOM:
-                    show_dialog(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom[0]), 1);
+                    dialog_show_with_callback(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom[0]), 1, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_BUTTON_GENERATE:
                     // ...

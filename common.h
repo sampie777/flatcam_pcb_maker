@@ -68,6 +68,7 @@ typedef struct {
     char value[64];
     char *destination;
     int max_length;
+    void (*callback)(void*);
 } DialogOptions;
 
 typedef struct {
@@ -88,7 +89,6 @@ typedef struct {
 typedef struct {
     char *buffer;
     int length;
-    int line_count;
 } ScreenBuffer;
 
 #endif //FLATCAM_PCB_MAKER_COMMON_H

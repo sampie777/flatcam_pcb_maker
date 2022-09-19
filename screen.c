@@ -22,14 +22,6 @@ void bufferAppend(ScreenBuffer *screen_buffer, const char *s) {
     // Update buffer properties
     screen_buffer->buffer = new;
     screen_buffer->length += len;
-
-    // Count new lines
-    screen_buffer->line_count = 0;
-    for (int i = 0; i < screen_buffer->length; i++) {
-        if (screen_buffer->buffer[i] == '\n') {
-            screen_buffer->line_count++;
-        }
-    }
 }
 
 void bufferFree(ScreenBuffer *screen_buffer) {
@@ -201,7 +193,15 @@ void screen_draw(AppState *state, ScreenBuffer *screen_buffer) {
 }
 
 void clear_remaining(AppState *state, ScreenBuffer *screen_buffer) {
-    for (int y = screen_buffer->line_count + 1; y < state->row_count; y++) {
+    // Count new lines
+    int line_count = 0;
+    for (int i = 0; i < screen_buffer->length; i++) {
+        if (screen_buffer->buffer[i] == '\n') {
+            line_count++;
+        }
+    }
+
+    for (int y = line_count + 1; y < state->row_count; y++) {
         bufferAppend(screen_buffer, NEW_LINE);
     }
 }
