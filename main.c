@@ -47,7 +47,7 @@ void confirm_selection(AppState *state) {
         }
         case SCREEN_SELECT_ACTION: {
             switch (state->action_selection) {
-                case ACTION_GENERATE_FLATCAM_CODE:
+                case ACTION_GENERATE_FLATCAM_COMMANDS:
                     state->screen = SCREEN_GENERATE_FLATCAM;
                     state->flatcam_option_selection = FLATCAM_BUTTON_GENERATE;
                     break;
