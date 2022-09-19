@@ -5,7 +5,9 @@
 #ifndef FLATCAM_PCB_MAKER_UTILS_H
 #define FLATCAM_PCB_MAKER_UTILS_H
 
-int bound(int value, int min, int max);
+#include <stdbool.h>
+
+int bound(int value, int min, int max, bool roll_over);
 
 void copy_to_clipboard(const char *data);
 

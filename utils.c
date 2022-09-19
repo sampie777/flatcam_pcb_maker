@@ -11,9 +11,17 @@
 #include <windows.h>
 #endif
 
-int bound(int value, int min, int max) {
-    if (value < min) return min;
-    if (value > max) return max;
+int bound(int value, int min, int max, bool roll_over) {
+    if (value < min) {
+        if (roll_over)
+            return max;
+        return min;
+    }
+    if (value > max) {
+        if (roll_over)
+            return value % (max + 1);
+        return max;
+    }
     return value;
 }
 

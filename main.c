@@ -149,9 +149,9 @@ void editorProcessKeypress(AppState *state) {
 }
 
 void app_control(AppState *state) {
-    state->project_selection = bound(state->project_selection, 0, state->projects_count - 1);
-    state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1);
-    state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1);
+    state->project_selection = bound(state->project_selection, 0, state->projects_count - 1, true);
+    state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
+    state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
 }
 
 int main() {
