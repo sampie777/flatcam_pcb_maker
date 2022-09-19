@@ -9,10 +9,10 @@
 #include "utils.h"
 
 void generate_script(const AppState *state) {
-    int should_mirror = strcmp(state->flatcam_options.mirror, "y") == 0 || strcmp(state->flatcam_options.mirror, "Y") == 0;
-    int traces_are_on_bottom = strcmp(state->flatcam_options.traces, "b") == 0 || strcmp(state->flatcam_options.traces, "B") == 0;
-    int should_silkscreen_top = strcmp(state->flatcam_options.silkscreen_top, "T") == 0 || strcmp(state->flatcam_options.silkscreen_top, "t") == 0;
-    int should_silkscreen_bottom = strcmp(state->flatcam_options.silkscreen_bottom, "B") == 0 || strcmp(state->flatcam_options.silkscreen_bottom, "b") == 0;
+    int should_mirror = state->flatcam_options.mirror == 'Y';
+    int traces_are_on_bottom = state->flatcam_options.traces == 'B';
+    int should_silkscreen_top = state->flatcam_options.silkscreen_top == 'T';
+    int should_silkscreen_bottom = state->flatcam_options.silkscreen_bottom == 'B';
     int should_silkscreen = should_silkscreen_top && should_silkscreen_bottom;
 
     char *traces_file = traces_are_on_bottom ? "copper_bottom" : "copper_top";

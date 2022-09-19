@@ -3,8 +3,8 @@
 #define _GNU_SOURCE
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "common.h"
 #include "terminal_utils.h"
 #include "screen.h"
@@ -65,28 +65,28 @@ void confirm_selection(AppState *state) {
         case SCREEN_GENERATE_FLATCAM: {
             switch (state->flatcam_option_selection) {
                 case FLATCAM_COPPER_LAYER:
-                    dialog_show_with_callback(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces[0]), 1, flatcam_screen_dialog_callback);
+                    dialog_show_char_with_callback(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_MIRROR:
-                    dialog_show_with_callback(state, "Mirror [Y,N]", state->flatcam_options.mirror, &(state->flatcam_options.mirror[0]), 1, flatcam_screen_dialog_callback);
+                    dialog_show_char_with_callback(state, "Mirror [Y,N]", state->flatcam_options.mirror, &(state->flatcam_options.mirror), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_OFFSET_X:
-                    dialog_show_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_string_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_OFFSET_Y:
-                    dialog_show_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_string_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_DIA_WIDTH:
-                    dialog_show_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9, flatcam_screen_dialog_callback);
+                    dialog_show_string_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_FEEDRATE:
-                    dialog_show_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
-                    dialog_show_with_callback(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top[0]), 1, flatcam_screen_dialog_callback);
+                    dialog_show_char_with_callback(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_SILKSCREEN_BOTTOM:
-                    dialog_show_with_callback(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom[0]), 1, flatcam_screen_dialog_callback);
+                    dialog_show_char_with_callback(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_BUTTON_GENERATE:
                     flatcam_generate(state);
@@ -152,18 +152,23 @@ void app_control(AppState *state) {
     state->project_selection = bound(state->project_selection, 0, state->projects_count - 1, true);
     state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
+
+    state->flatcam_options.traces = (char) toupper(state->flatcam_options.traces);
+    state->flatcam_options.mirror = (char) toupper(state->flatcam_options.mirror);
+    state->flatcam_options.silkscreen_top = (char) toupper(state->flatcam_options.silkscreen_top);
+    state->flatcam_options.silkscreen_bottom = (char) toupper(state->flatcam_options.silkscreen_bottom);
 }
 
 int main() {
     AppState state = {
-            .flatcam_options.traces = "T",
-            .flatcam_options.mirror = "Y",
+            .flatcam_options.traces = 'T',
+            .flatcam_options.mirror = 'Y',
             .flatcam_options.offset_x = "20",
             .flatcam_options.offset_y = "29",
             .flatcam_options.dia_width = "0.20188",
             .flatcam_options.feedrate_etch = "1400",
-            .flatcam_options.silkscreen_top = "N",
-            .flatcam_options.silkscreen_bottom = "N",
+            .flatcam_options.silkscreen_top = 'N',
+            .flatcam_options.silkscreen_bottom = 'N',
     };
 
     enableRawMode();

@@ -7,9 +7,14 @@
 
 #include "common.h"
 
-void dialog_show(AppState *state, const char *title, const char *default_value, char *destination, int max_length);
 
-void dialog_show_with_callback(AppState *state, const char *title, const char *default_value, char *destination, int max_length, void (*callback)(AppState *));
+void dialog_show_string(AppState *state, const char *title, const char *default_value, char *destination, int max_length);
+
+void dialog_show_char(AppState *state, const char *title, char default_value, char *destination);
+
+void dialog_show_string_with_callback(AppState *state, const char *title, const char *default_value, char *destination, int max_length, void (*callback)(AppState *));
+
+void dialog_show_char_with_callback(AppState *state, const char *title, char default_value, char *destination, void (*callback)(AppState *));
 
 void dialog_confirm(AppState *state);
 

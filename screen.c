@@ -66,7 +66,7 @@ void draw_button(ScreenBuffer *screen_buffer, const char *title, int highlight) 
     }
 }
 
-void draw_text_field(ScreenBuffer *screen_buffer, const char *title, const char *value, int highlight) {
+void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, const char *value, int highlight) {
     char buffer[256];
     sprintf(buffer, "   %-20s  ", title);
     bufferAppend(screen_buffer, buffer);
@@ -76,6 +76,24 @@ void draw_text_field(ScreenBuffer *screen_buffer, const char *title, const char 
     }
 
     sprintf(buffer, " %s ", value);
+    bufferAppend(screen_buffer, buffer);
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    if (highlight) {
+        enable_highlight(screen_buffer, 0);
+    }
+}
+
+void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char value, int highlight) {
+    char buffer[256];
+    sprintf(buffer, "   %-20s  ", title);
+    bufferAppend(screen_buffer, buffer);
+
+    if (highlight) {
+        enable_highlight(screen_buffer, 1);
+    }
+
+    sprintf(buffer, " %c ", value);
     bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
 
@@ -125,14 +143,14 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
 
     bufferAppend(screen_buffer, "Options");
     bufferAppend(screen_buffer, NEW_LINE);
-    draw_text_field(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
-    draw_text_field(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
-    draw_text_field(screen_buffer, "Offset X", state->flatcam_options.offset_x, state->flatcam_option_selection == FLATCAM_OFFSET_X);
-    draw_text_field(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
-    draw_text_field(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
-    draw_text_field(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
-    draw_text_field(screen_buffer, "Silkscreen top", state->flatcam_options.silkscreen_top, state->flatcam_option_selection == FLATCAM_SILKSCREEN_TOP);
-    draw_text_field(screen_buffer, "Silkscreen bottom", state->flatcam_options.silkscreen_bottom, state->flatcam_option_selection == FLATCAM_SILKSCREEN_BOTTOM);
+    draw_text_field_char(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
+    draw_text_field_char(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
+    draw_text_field_string(screen_buffer, "Offset X", state->flatcam_options.offset_x, state->flatcam_option_selection == FLATCAM_OFFSET_X);
+    draw_text_field_string(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
+    draw_text_field_string(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
+    draw_text_field_string(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
+    draw_text_field_char(screen_buffer, "Silkscreen top", state->flatcam_options.silkscreen_top, state->flatcam_option_selection == FLATCAM_SILKSCREEN_TOP);
+    draw_text_field_char(screen_buffer, "Silkscreen bottom", state->flatcam_options.silkscreen_bottom, state->flatcam_option_selection == FLATCAM_SILKSCREEN_BOTTOM);
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Generate", state->flatcam_option_selection == FLATCAM_BUTTON_GENERATE);
@@ -151,7 +169,7 @@ void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
 void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
     char buffer[256];
     bufferAppend(screen_buffer, NEW_LINE);
-    sprintf(buffer, "%s (default: %s)", state->dialog.title, state->dialog.default_value);
+    sprintf(buffer, "%s (current: %s)", state->dialog.title, state->dialog.default_value);
     bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
