@@ -40,6 +40,7 @@ enum ProjectActions {
 
 enum FlatcamOptions {
     FLATCAM_COPPER_LAYER = 0,
+    FLATCAM_MIRROR,
     FLATCAM_OFFSET_X,
     FLATCAM_OFFSET_Y,
     FLATCAM_DIA_WIDTH,
@@ -53,6 +54,7 @@ enum FlatcamOptions {
 
 typedef struct {
     char traces[4];
+    char mirror[4];
     char offset_x[8];
     char offset_y[8];
     char dia_width[10];

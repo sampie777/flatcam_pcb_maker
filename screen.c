@@ -126,6 +126,7 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     bufferAppend(screen_buffer, "Options");
     bufferAppend(screen_buffer, NEW_LINE);
     draw_text_field(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
+    draw_text_field(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
     draw_text_field(screen_buffer, "Offset X", state->flatcam_options.offset_x, state->flatcam_option_selection == FLATCAM_OFFSET_X);
     draw_text_field(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
     draw_text_field(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);

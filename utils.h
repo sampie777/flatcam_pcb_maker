@@ -7,4 +7,6 @@
 
 int bound(int value, int min, int max);
 
+void copy_to_clipboard(const char *data);
+
 #endif //FLATCAM_PCB_MAKER_UTILS_H
