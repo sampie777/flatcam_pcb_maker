@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #endif
 
@@ -29,7 +29,7 @@ int bound(int value, int min, int max, bool roll_over) {
 
 void copy_to_clipboard(const char *data) {
     const size_t length = strlen(data) + 1;
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
     HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, length);
     memcpy(GlobalLock(hMem), data, length);
     GlobalUnlock(hMem);
