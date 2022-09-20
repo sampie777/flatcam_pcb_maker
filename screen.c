@@ -56,11 +56,11 @@ void draw_option(ScreenBuffer *screen_buffer, int action_index, const char *titl
     char buffer[256];
     sprintf(buffer, "% 4d    %s ", action_index, title);
     bufferAppend(screen_buffer, buffer);
-    bufferAppend(screen_buffer, NEW_LINE);
-
     if (highlight) {
         enable_highlight(screen_buffer, false);
     }
+    bufferAppend(screen_buffer, NEW_LINE);
+
 }
 
 void draw_button(ScreenBuffer *screen_buffer, const char *title, bool highlight) {
@@ -71,11 +71,11 @@ void draw_button(ScreenBuffer *screen_buffer, const char *title, bool highlight)
     char buffer[256];
     sprintf(buffer, "[ %s ]", title);
     bufferAppend(screen_buffer, buffer);
-    bufferAppend(screen_buffer, NEW_LINE);
 
     if (highlight) {
         enable_highlight(screen_buffer, false);
     }
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, const char *value, bool highlight) {
@@ -89,11 +89,11 @@ void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, cons
 
     sprintf(buffer, " %s ", value);
     bufferAppend(screen_buffer, buffer);
-    bufferAppend(screen_buffer, NEW_LINE);
-
     if (highlight) {
         enable_highlight(screen_buffer, false);
     }
+    bufferAppend(screen_buffer, NEW_LINE);
+
 }
 
 void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char value, bool highlight) {
@@ -107,11 +107,11 @@ void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char v
 
     sprintf(buffer, " %c ", value);
     bufferAppend(screen_buffer, buffer);
-    bufferAppend(screen_buffer, NEW_LINE);
-
     if (highlight) {
         enable_highlight(screen_buffer, false);
     }
+    bufferAppend(screen_buffer, NEW_LINE);
+
 }
 
 void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
@@ -128,11 +128,12 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
 
         sprintf(buffer, "% 4d    %s ", i, state->projects[i]);
         bufferAppend(screen_buffer, buffer);
-        bufferAppend(screen_buffer, NEW_LINE);
 
         if (state->project_selection == i) {
             enable_highlight(screen_buffer, false);
         }
+
+        bufferAppend(screen_buffer, NEW_LINE);
     }
 
     bufferAppend(screen_buffer, NEW_LINE);
