@@ -196,8 +196,45 @@ int modify_trace_file(AppState *state) {
     return replace_file_with_tempfile(state, TRACES_OUTPUT_FILE);
 }
 
+int modify_silkscreen_file(AppState *state) {
+    FILE *file, *temp_file;
+    int result = open_files(state, SILKSCREEN_OUTPUT_FILE, &file, &temp_file);
+    if (result != RESULT_OK) return result;
+
+    bool use_mesh_present = false;
+    bool end_print_beep_present = false;
+
+    char *line = NULL;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, "F")) {
+            fprintf(temp_file, "G0 %s\n", line);
+            continue;
+        }
+
+        if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
+            fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
+            use_mesh_present = true;
+        } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
+            fprintf(temp_file, G_BEEP_END"\n");
+            end_print_beep_present = true;
+        } else if (strcmp(line, G_USE_MESH) == 0) {
+            use_mesh_present = true;
+        } else if (strcmp(line, G_BEEP_END) == 0) {
+            end_print_beep_present = true;
+        }
+
+        fprintf(temp_file, "%s\n", line);
+    }
+    if (line) free(line);
+
+    fclose(temp_file);
+    fclose(file);
+    return replace_file_with_tempfile(state, SILKSCREEN_OUTPUT_FILE);
+}
+
 void gcode_modify(AppState *state) {
     int result = modify_trace_file(state);
+    result |= modify_silkscreen_file(state);
     result |= modify_check_holes_file(state);
     result |= modify_drill_file(state);
 
