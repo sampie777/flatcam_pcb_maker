@@ -5,8 +5,6 @@
 #ifndef FLATCAM_PCB_MAKER_COMMON_H
 #define FLATCAM_PCB_MAKER_COMMON_H
 
-#include <termios.h>
-
 #define PROJECTS_PATH "/home/samuel/workspace/c/flatcam_pcb_maker/.files"
 #define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
 #define SILKSCREEN_OUTPUT_FILE "1_draw_silkscreen.gcode"
