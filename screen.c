@@ -134,6 +134,9 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
             enable_highlight(screen_buffer, false);
         }
     }
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    draw_button(screen_buffer, "Quit", state->project_selection == state->projects_count);
 }
 
 void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {

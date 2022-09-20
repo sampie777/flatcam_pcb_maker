@@ -81,6 +81,11 @@ void confirm_selection(AppState *state) {
 
     switch (state->screen) {
         case SCREEN_SELECT_PROJECT: {
+            if (state->project_selection == state->projects_count) {
+                // Exit program
+                clearScreen();
+                exit(0);
+            }
             size_t size = strlen(state->projects[state->project_selection]) * sizeof(char);
             state->project = malloc(size + 1);
             strcpy(state->project, state->projects[state->project_selection]);
@@ -204,7 +209,7 @@ void editorProcessKeypress(AppState *state) {
 void app_control(AppState *state) {
     static time_t status_message_start_time = 0;
 
-    state->project_selection = bound(state->project_selection, 0, state->projects_count - 1, true);
+    state->project_selection = bound(state->project_selection, 0, state->projects_count, true);
     state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
     state->dialog_selection = bound(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
