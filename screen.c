@@ -283,7 +283,7 @@ void clear_remaining(AppState *state, ScreenBuffer *screen_buffer) {
         }
     }
 
-    for (int y = line_count + 1; y < state->row_count; y++) {
+    for (int y = line_count + 1; y < state->row_count - 1; y++) {
         bufferAppend(screen_buffer, NEW_LINE);
     }
 }
