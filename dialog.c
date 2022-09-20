@@ -9,7 +9,7 @@ void dialog_show_string(AppState *state, const char *title, const char *default_
     state->dialog.show = 1;
     strcpy(state->dialog.title, title);
     strcpy(state->dialog.default_value, default_value);
-    memset(state->dialog.value, '\0', strlen(state->dialog.value));
+    strcpy(state->dialog.value, default_value);
     state->dialog.destination = destination;
     state->dialog.max_length = max_length;
     state->dialog.type = 's';
@@ -21,7 +21,8 @@ void dialog_show_char(AppState *state, const char *title, char default_value, ch
     strcpy(state->dialog.title, title);
     memset(state->dialog.default_value, '\0', strlen(state->dialog.default_value));
     state->dialog.default_value[0] = default_value;
-    memset(state->dialog.value, '\0', strlen(state->dialog.value));
+    state->dialog.value[0] = default_value;
+    state->dialog.value[1] = '\0';
     state->dialog.destination = destination;
     state->dialog.max_length = 1;
     state->dialog.type = 'c';
