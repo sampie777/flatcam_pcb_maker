@@ -43,6 +43,13 @@ void selection_set(AppState *state, int value) {
 }
 
 void flatcam_screen_dialog_callback(AppState *state) {
+    if (state->flatcam_option_selection == FLATCAM_COPPER_LAYER) {
+        if (toupper(state->flatcam_options.traces) == 'T') {
+            state->flatcam_options.mirror = 'N';
+        } else if (toupper(state->flatcam_options.traces) == 'B') {
+            state->flatcam_options.mirror = 'Y';
+        }
+    }
     state->flatcam_option_selection++;
 }
 
@@ -137,7 +144,7 @@ void editorProcessKeypress(AppState *state) {
             break;
         case BACKSPACE:
             if (state->dialog.show) {
-                int length = strlen(state->dialog.value);
+                size_t length = strlen(state->dialog.value);
                 if (length > 0) {
                     state->dialog.value[length - 1] = '\0';
                 }
@@ -153,7 +160,7 @@ void editorProcessKeypress(AppState *state) {
         }
         default:
             if (state->dialog.show) {
-                int length = strlen(state->dialog.value);
+                size_t length = strlen(state->dialog.value);
                 if (length < 63 && length < state->dialog.max_length) {
                     state->dialog.value[length] = (char) c;
                     state->dialog.value[length + 1] = '\0';
@@ -179,7 +186,7 @@ void app_control(AppState *state) {
 int main() {
     AppState state = {
             .flatcam_options.traces = 'T',
-            .flatcam_options.mirror = 'Y',
+            .flatcam_options.mirror = 'N',
             .flatcam_options.offset_x = "20",
             .flatcam_options.offset_y = "29",
             .flatcam_options.dia_width = "0.20188",
