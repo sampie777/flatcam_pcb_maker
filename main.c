@@ -185,8 +185,8 @@ void app_control(AppState *state) {
 
 int main() {
     AppState state = {
-            .flatcam_options.traces = 'T',
-            .flatcam_options.mirror = 'N',
+            .flatcam_options.traces = 'B',
+            .flatcam_options.mirror = 'Y',
             .flatcam_options.offset_x = "20",
             .flatcam_options.offset_y = "29",
             .flatcam_options.dia_width = "0.20188",

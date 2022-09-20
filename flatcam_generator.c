@@ -42,12 +42,16 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
-    *output = malloc(strlen(traces_top_output) + strlen(traces_bottom_output) + 85);
-    sprintf(*output, "%s%s"
-                     "join_geometries joined %s %s joined\n",
+    *output = malloc(strlen(traces_top_output) + strlen(traces_bottom_output) + 512);
+    sprintf(*output, "\n\n%s%s"
+                     "join_geometries silkscreen_joined %s %s\n"
+                     "cncjob silkscreen_joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
+                     "write_gcode silkscreen_joined_cnc \"%s/%s/CAMOutputs/flatCAM/1_draw_silkscreen.gcode\"",
             traces_top_output, traces_bottom_output,
             should_silkscreen_top ? "silkscreen_top.follow" : "",
-            should_silkscreen_bottom ? "silkscreen_bottom.follow" : ""
+            state->flatcam_options.feedrate_etch,
+            should_silkscreen_bottom ? "silkscreen_bottom.follow" : "",
+            PROJECTS_PATH, state->project
     );
 }
 
@@ -72,18 +76,17 @@ void generate_script(const AppState *state) {
                     "isolate traces -dia %s -passes 10 -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
                     "join_geometries joined profile_cutout traces.iso\n"
-                    "%s"
-                    "cncjob %s -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
+                    "cncjob joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
+                    "write_gcode joined_cnc \"%s/%s/CAMOutputs/flatCAM/0_draw_traces.gcode\"\n"
                     "\n"
                     "open_excellon \"%s/%s/CAMOutputs/DrillFiles/drill_1_16.xln\" -outname drills\n"
                     "offset drills %s %s\n"
                     "%s"
                     "drillcncjob drills -drillz 0.3 -travelz 2.5 -feedrate 600.0 -tools 1 -outname check_holes_cnc\n"
                     "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4 -outname drill_holes_cnc\n"
-                    "\n"
-                    "write_gcode %s \"%s/%s/CAMOutputs/flatCAM/0_draw_traces.gcode\"\n"
-                    "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/1_check_holes_cnc.gcode\"\n"
-                    "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/2_drill_holes_cnc.gcode\"\n"
+                    "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/2_check_holes_cnc.gcode\"\n"
+                    "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/3_drill_holes_cnc.gcode\""
+                    "%s"
                     "%s",
             PROJECTS_PATH, state->project,
             state->flatcam_options.offset_x,
@@ -96,18 +99,19 @@ void generate_script(const AppState *state) {
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width,
 
-            silkscreen_output ? silkscreen_output : "",
-            silkscreen_output ? "joined_1" : "joined", state->flatcam_options.feedrate_etch,
+            state->flatcam_options.feedrate_etch,
+            PROJECTS_PATH, state->project,
 
             PROJECTS_PATH, state->project,
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
-            silkscreen_output ? "joined_1_cnc" : "joined_cnc", PROJECTS_PATH, state->project,
             PROJECTS_PATH, state->project,
             PROJECTS_PATH, state->project,
-            should_mirror ? "" : "plot\n"
+
+            silkscreen_output ? silkscreen_output : "",
+            should_mirror ? "" : "\nplot"
     );
 
     free(silkscreen_output);
