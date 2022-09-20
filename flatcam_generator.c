@@ -49,8 +49,8 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                      "write_gcode silkscreen_joined_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"",
             traces_top_output, traces_bottom_output,
             should_silkscreen_top ? "silkscreen_top.follow" : "",
-            state->flatcam_options.feedrate_etch,
             should_silkscreen_bottom ? "silkscreen_bottom.follow" : "",
+            state->flatcam_options.feedrate_etch,
             PROJECTS_PATH, state->project, SILKSCREEN_OUTPUT_FILE
     );
 }
