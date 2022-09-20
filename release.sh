@@ -24,13 +24,13 @@ function setVersion() {
 }
 
 function releasePatch {
-#  git checkout master || exit 1
+  git checkout master || exit 1
 
   # Create patch version
   CURRENT_VERSION=$(git tag --list 'v*' --sort 'v:refname' | tail -n 1)
   RELEASE_VERSION=$(echo ${CURRENT_VERSION} | awk -F'.' '{print $1"."$2"."$3+1}')
 
-#  git merge develop || exit 1
+  git merge develop || exit 1
 
   setVersion "${RELEASE_VERSION}" || exit 1
 
@@ -38,8 +38,8 @@ function releasePatch {
 }
 
 function releaseMinor {
-#  git checkout master || exit 1
-#  git merge develop || exit 1
+  git checkout master || exit 1
+  git merge develop || exit 1
 
   # Create patch version
   CURRENT_VERSION=$(git tag --list 'v*' --sort 'v:refname' | tail -n 1)
@@ -54,14 +54,14 @@ function pushAndRelease {
   RELEASE_VERSION="$1"
   echo "Release version: ${RELEASE_VERSION}"
 
-#  git commit -m "version release: ${RELEASE_VERSION}" || exit 1
-#  git tag "v${RELEASE_VERSION}" || exit 1
-#  git push -u origin master --tags || exit 1
+  git commit -m "version release: ${RELEASE_VERSION}" || exit 1
+  git tag "v${RELEASE_VERSION}" || exit 1
+  git push -u origin master --tags || exit 1
 }
 
 function setNextDevelopmentVersion {
-#  git checkout develop || exit 1
-#  git rebase master || exit 1
+  git checkout develop || exit 1
+  git rebase master || exit 1
 
   # Generate next (minor) development version
   CURRENT_VERSION=$(git tag --list 'v*' --sort 'v:refname' | tail -n 1)
@@ -70,8 +70,8 @@ function setNextDevelopmentVersion {
   echo "Next development version: ${DEV_VERSION}"
   setVersion "${DEV_VERSION}" || exit 1
 
-#  git commit -m "next development version" || exit 1
-#  git push -u origin develop --tags || exit 1
+  git commit -m "next development version" || exit 1
+  git push -u origin develop --tags || exit 1
 }
 
 command="$1"
