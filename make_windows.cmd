@@ -1,0 +1,2 @@
+rm flatcam_pbc_maker.exe
+make

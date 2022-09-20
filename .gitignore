@@ -5,3 +5,4 @@ cmake-build-debug/
 flatcam_pcb_maker
 test.txt
 .files/
+flatcam_pcb_maker.exe

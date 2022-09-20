@@ -1,6 +1,6 @@
 This quick-and-dirity tool was created to assist me in generating Gcode for creating PCBs using my 3D printer. 
 
-The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software. 
+The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software. It is compatible with Ubuntu 20 and Windows 7.
 
 ## Workflow
 
@@ -13,3 +13,13 @@ The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software.
 7. Now modify the Gcode output using this tool.
 8. Your Gcode files are now ready to use!
 
+## Build
+
+### Linux
+
+1. Run `make`.
+
+### Windows
+
+1. Install Cygwin and make sure it's in your path.
+2. Run `make_script.cmd` file.
