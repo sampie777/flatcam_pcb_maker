@@ -2,7 +2,11 @@
 // Created by samuel on 16-9-22.
 //
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
+#include <windows.h>
+#else
 #include <bits/types/FILE.h>
+#endif
 
 #ifndef FLATCAM_PCB_MAKER_FILE_UTILS_H
 #define FLATCAM_PCB_MAKER_FILE_UTILS_H
