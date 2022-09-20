@@ -110,6 +110,9 @@ void confirm_selection(AppState *state) {
                 case FLATCAM_SILKSCREEN_BOTTOM:
                     dialog_show_char_with_callback(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom), flatcam_screen_dialog_callback);
                     break;
+                case FLATCAM_SILKSCREEN_MIRROR:
+                    dialog_show_char_with_callback(state, "Mirror silkscreen [Y,N]", state->flatcam_options.silkscreen_mirror, &(state->flatcam_options.silkscreen_mirror), flatcam_screen_dialog_callback);
+                    break;
                 case FLATCAM_BUTTON_GENERATE:
                     flatcam_generate(state);
                     state->flatcam_option_selection = FLATCAM_BUTTON_BACK;
@@ -181,6 +184,7 @@ void app_control(AppState *state) {
     state->flatcam_options.mirror = (char) toupper(state->flatcam_options.mirror);
     state->flatcam_options.silkscreen_top = (char) toupper(state->flatcam_options.silkscreen_top);
     state->flatcam_options.silkscreen_bottom = (char) toupper(state->flatcam_options.silkscreen_bottom);
+    state->flatcam_options.silkscreen_mirror = (char) toupper(state->flatcam_options.silkscreen_mirror);
 }
 
 int main() {
@@ -193,6 +197,7 @@ int main() {
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
+            .flatcam_options.silkscreen_mirror = 'N',
     };
 
     enableRawMode();

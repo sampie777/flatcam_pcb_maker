@@ -141,7 +141,7 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
-    bufferAppend(screen_buffer, "Options");
+    bufferAppend(screen_buffer, "Traces & drills");
     bufferAppend(screen_buffer, NEW_LINE);
     draw_text_field_char(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
     draw_text_field_char(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
@@ -149,8 +149,15 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     draw_text_field_string(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
     draw_text_field_string(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
     draw_text_field_string(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, "Silkscreen");
+    bufferAppend(screen_buffer, NEW_LINE);
     draw_text_field_char(screen_buffer, "Silkscreen top", state->flatcam_options.silkscreen_top, state->flatcam_option_selection == FLATCAM_SILKSCREEN_TOP);
     draw_text_field_char(screen_buffer, "Silkscreen bottom", state->flatcam_options.silkscreen_bottom, state->flatcam_option_selection == FLATCAM_SILKSCREEN_BOTTOM);
+    if (state->flatcam_options.silkscreen_top == 'Y' || state->flatcam_options.silkscreen_bottom == 'Y') {
+        draw_text_field_char(screen_buffer, "Mirror silkscreen", state->flatcam_options.silkscreen_mirror, state->flatcam_option_selection == FLATCAM_SILKSCREEN_MIRROR);
+    }
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Generate", state->flatcam_option_selection == FLATCAM_BUTTON_GENERATE);

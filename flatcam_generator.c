@@ -10,7 +10,7 @@
 #include "utils.h"
 
 void generate_silkscreen_commands(const AppState *state, char **output) {
-    int should_mirror = state->flatcam_options.mirror == 'Y';
+    int should_mirror = state->flatcam_options.silkscreen_mirror == 'Y';
     int should_silkscreen_top = state->flatcam_options.silkscreen_top == 'Y';
     int should_silkscreen_bottom = state->flatcam_options.silkscreen_bottom == 'Y';
     int should_silkscreen = should_silkscreen_top || should_silkscreen_bottom;

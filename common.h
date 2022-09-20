@@ -47,6 +47,7 @@ enum FlatcamOptions {
     FLATCAM_FEEDRATE,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
+    FLATCAM_SILKSCREEN_MIRROR,
     FLATCAM_BUTTON_GENERATE,
     FLATCAM_BUTTON_BACK,
     FLATCAM_MAX_VALUE
@@ -61,6 +62,7 @@ typedef struct {
     char feedrate_etch[8];
     char silkscreen_top;
     char silkscreen_bottom;
+    char silkscreen_mirror;
 } FlatcamOptions;
 
 typedef struct {
