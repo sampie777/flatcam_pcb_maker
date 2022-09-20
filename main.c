@@ -1,5 +1,7 @@
 #define _DEFAULT_SOURCE
+#ifndef
 #define _BSD_SOURCE
+#endif
 #define _GNU_SOURCE
 
 #include <stdlib.h>
