@@ -134,6 +134,9 @@ void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
     draw_option(screen_buffer, ACTION_GENERATE_FLATCAM_COMMANDS, "Generate FlatCAM commands", state->action_selection == ACTION_GENERATE_FLATCAM_COMMANDS);
     draw_option(screen_buffer, ACTION_MODIFY_GCODE, "Modify Gcode", state->action_selection == ACTION_MODIFY_GCODE);
     draw_option(screen_buffer, ACTION_SHOW_CHECKLIST, "Checklist", state->action_selection == ACTION_SHOW_CHECKLIST);
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    draw_button(screen_buffer, "Back", state->action_selection == ACTION_BUTTON_BACK);
 }
 
 void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) {

@@ -84,6 +84,7 @@ void confirm_selection(AppState *state) {
             state->project = malloc(size + 1);
             strcpy(state->project, state->projects[state->project_selection]);
             state->screen = SCREEN_SELECT_ACTION;
+            state->action_selection = 0;
             break;
         }
         case SCREEN_SELECT_ACTION: {
@@ -97,6 +98,9 @@ void confirm_selection(AppState *state) {
                     break;
                 case ACTION_SHOW_CHECKLIST:
                     state->screen = SCREEN_SHOW_CHECKLIST;
+                    break;
+                case ACTION_BUTTON_BACK:
+                    state->screen = SCREEN_SELECT_PROJECT;
                     break;
             }
             break;
