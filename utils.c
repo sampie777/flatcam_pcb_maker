@@ -50,3 +50,7 @@ void copy_to_clipboard(const char *data) {
 #endif
     printf("=> Copied to clipboard!\n");
 }
+
+bool starts_with(const char *source, const char *needle) {
+    return strncmp(needle, source, strlen(needle)) == 0;
+}

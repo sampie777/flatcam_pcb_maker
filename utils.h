@@ -14,4 +14,6 @@ int bound(int value, int min, int max, bool roll_over);
 
 void copy_to_clipboard(const char *data);
 
+bool starts_with(const char *source, const char *needle);
+
 #endif //FLATCAM_PCB_MAKER_UTILS_H

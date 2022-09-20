@@ -7,7 +7,11 @@
 
 #include <termios.h>
 
-#define PROJECTS_PATH "/home/samuel"
+#define PROJECTS_PATH "/home/samuel/workspace/c/flatcam_pcb_maker/.files"
+#define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
+#define SILKSCREEN_OUTPUT_FILE "1_draw_silkscreen.gcode"
+#define DRILLS_CHECK_OUTPUT_FILE "2_check_holes.gcode"
+#define DRILLS_OUTPUT_FILE "3_drill_holes.gcode"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 

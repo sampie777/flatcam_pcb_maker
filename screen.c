@@ -37,6 +37,17 @@ void enable_highlight(ScreenBuffer *screen_buffer, int value) {
     }
 }
 
+void draw_horizontal_centered(AppState *state, ScreenBuffer *screen_buffer, const char *text) {
+    size_t length = strlen(text);
+    for (int i = 0; i < (state->column_count - length) / 2; i++) {
+        bufferAppend(screen_buffer, " ");
+    }
+    bufferAppend(screen_buffer, text);
+    for (int i = (int) ((state->column_count - length) / 2 + length); i < state->column_count; i++) {
+        bufferAppend(screen_buffer, " ");
+    }
+}
+
 void draw_option(ScreenBuffer *screen_buffer, int action_index, const char *title, bool highlight) {
     if (highlight) {
         enable_highlight(screen_buffer, true);
@@ -215,13 +226,19 @@ void draw_status_message(AppState *state, ScreenBuffer *screen_buffer) {
 
     enable_highlight(screen_buffer, true);
 
-    for (int i = 0; i < (state->column_count - message_length) / 2; i++) {
-        bufferAppend(screen_buffer, " ");
+    char buffer[state->column_count];
+    memset(buffer, '\0', state->column_count);
+    int column = 0;
+    for (int i = 0; i < message_length; i++) {
+        buffer[column++] = state->status_message[i];
+        if (column >= state->column_count - 4 || state->status_message[i] == '\n') {
+            draw_horizontal_centered(state, screen_buffer, buffer);
+            bufferAppend(screen_buffer, NEW_LINE);
+            memset(buffer, '\0', state->column_count);
+            column = 0;
+        }
     }
-    bufferAppend(screen_buffer, state->status_message);
-    for (int i = (state->column_count - message_length) / 2 + message_length; i < state->column_count; i++) {
-        bufferAppend(screen_buffer, " ");
-    }
+    draw_horizontal_centered(state, screen_buffer, buffer);
 
     enable_highlight(screen_buffer, false);
     bufferAppend(screen_buffer, NEW_LINE);

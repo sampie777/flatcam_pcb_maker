@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <stdio.h>
 #include "common.h"
 #include "terminal_utils.h"
 #include "screen.h"
