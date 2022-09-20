@@ -91,6 +91,7 @@ typedef struct {
     int dialog_selection;
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
+    char status_message[256];
 } AppState;
 
 typedef struct {

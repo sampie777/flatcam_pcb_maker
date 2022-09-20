@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "common.h"
 #include "terminal_utils.h"
 #include "screen.h"
@@ -12,6 +13,7 @@
 #include "utils.h"
 #include "dialog.h"
 #include "flatcam_generator.h"
+#include "gcode_modifier.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -89,6 +91,9 @@ void confirm_selection(AppState *state) {
                 case ACTION_GENERATE_FLATCAM_COMMANDS:
                     state->screen = SCREEN_GENERATE_FLATCAM;
                     state->flatcam_option_selection = FLATCAM_BUTTON_GENERATE;
+                    break;
+                case ACTION_MODIFY_GCODE:
+                    gcode_modify(state);
                     break;
                 case ACTION_SHOW_CHECKLIST:
                     state->screen = SCREEN_SHOW_CHECKLIST;
@@ -192,6 +197,8 @@ void editorProcessKeypress(AppState *state) {
 }
 
 void app_control(AppState *state) {
+    static time_t status_message_start_time = 0;
+
     state->project_selection = bound(state->project_selection, 0, state->projects_count - 1, true);
     state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
@@ -205,6 +212,15 @@ void app_control(AppState *state) {
     state->flatcam_options.silkscreen_top = (char) toupper(state->flatcam_options.silkscreen_top);
     state->flatcam_options.silkscreen_bottom = (char) toupper(state->flatcam_options.silkscreen_bottom);
     state->flatcam_options.silkscreen_mirror = (char) toupper(state->flatcam_options.silkscreen_mirror);
+
+    if (strlen(state->status_message) != 0) {
+        if (status_message_start_time == 0) {
+            status_message_start_time = time(NULL);
+        } else if (time(NULL) - status_message_start_time > 5) {
+            state->status_message[0] = '\0';
+            status_message_start_time = 0;
+        }
+    }
 }
 
 int main() {
@@ -219,6 +235,7 @@ int main() {
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
     };
+    state.status_message[0] = '\0';
 
     enableRawMode();
 

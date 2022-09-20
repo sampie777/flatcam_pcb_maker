@@ -130,4 +130,5 @@ void generate_script(const AppState *state) {
 
 void flatcam_generate(AppState *state) {
     generate_script(state);
+    strcpy(state->status_message, "Copied!");
 }

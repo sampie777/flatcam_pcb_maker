@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "screen.h"
 
 #define NEW_LINE "\r\n\x1b[K"
@@ -36,9 +37,9 @@ void enable_highlight(ScreenBuffer *screen_buffer, int value) {
     }
 }
 
-void draw_option(ScreenBuffer *screen_buffer, int action_index, const char *title, int highlight) {
+void draw_option(ScreenBuffer *screen_buffer, int action_index, const char *title, bool highlight) {
     if (highlight) {
-        enable_highlight(screen_buffer, 1);
+        enable_highlight(screen_buffer, true);
     }
 
     char buffer[256];
@@ -47,13 +48,13 @@ void draw_option(ScreenBuffer *screen_buffer, int action_index, const char *titl
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 0);
+        enable_highlight(screen_buffer, false);
     }
 }
 
-void draw_button(ScreenBuffer *screen_buffer, const char *title, int highlight) {
+void draw_button(ScreenBuffer *screen_buffer, const char *title, bool highlight) {
     if (highlight) {
-        enable_highlight(screen_buffer, 1);
+        enable_highlight(screen_buffer, true);
     }
 
     char buffer[256];
@@ -62,17 +63,17 @@ void draw_button(ScreenBuffer *screen_buffer, const char *title, int highlight) 
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 0);
+        enable_highlight(screen_buffer, false);
     }
 }
 
-void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, const char *value, int highlight) {
+void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, const char *value, bool highlight) {
     char buffer[256];
     sprintf(buffer, "   %-20s  ", title);
     bufferAppend(screen_buffer, buffer);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 1);
+        enable_highlight(screen_buffer, true);
     }
 
     sprintf(buffer, " %s ", value);
@@ -80,17 +81,17 @@ void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, cons
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 0);
+        enable_highlight(screen_buffer, false);
     }
 }
 
-void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char value, int highlight) {
+void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char value, bool highlight) {
     char buffer[256];
     sprintf(buffer, "   %-20s  ", title);
     bufferAppend(screen_buffer, buffer);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 1);
+        enable_highlight(screen_buffer, true);
     }
 
     sprintf(buffer, " %c ", value);
@@ -98,7 +99,7 @@ void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char v
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (highlight) {
-        enable_highlight(screen_buffer, 0);
+        enable_highlight(screen_buffer, false);
     }
 }
 
@@ -111,7 +112,7 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
     char buffer[256];
     for (int i = 0; i < state->projects_count; i++) {
         if (state->project_selection == i) {
-            enable_highlight(screen_buffer, 1);
+            enable_highlight(screen_buffer, true);
         }
 
         sprintf(buffer, "% 4d    %s ", i, state->projects[i]);
@@ -119,7 +120,7 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
         bufferAppend(screen_buffer, NEW_LINE);
 
         if (state->project_selection == i) {
-            enable_highlight(screen_buffer, 0);
+            enable_highlight(screen_buffer, false);
         }
     }
 }
@@ -170,7 +171,7 @@ void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
-    draw_button(screen_buffer, "Back", 1);
+    draw_button(screen_buffer, "Back", true);
 }
 
 void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
@@ -183,12 +184,12 @@ void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
 
     if (strlen(state->dialog.char_options) == 0) {
         bufferAppend(screen_buffer, "  ");
-        enable_highlight(screen_buffer, 1);
+        enable_highlight(screen_buffer, true);
         char buffer2[256];
         sprintf(buffer2, "%s%s", state->dialog.value, strlen(state->dialog.value) < state->dialog.max_length ? "_" : "");
         sprintf(buffer, " %-*s ", state->dialog.max_length, buffer2);
         bufferAppend(screen_buffer, buffer);
-        enable_highlight(screen_buffer, 0);
+        enable_highlight(screen_buffer, false);
     } else {
         for (int i = 0; i < strlen(state->dialog.char_options); i++) {
             sprintf(buffer, "%c", state->dialog.char_options[i]);
@@ -202,8 +203,31 @@ void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, NEW_LINE);
 }
 
+void draw_status_message(AppState *state, ScreenBuffer *screen_buffer) {
+    size_t message_length = strlen(state->status_message);
+    if (message_length == 0) {
+        bufferAppend(screen_buffer, NEW_LINE);
+        return;
+    }
+
+    enable_highlight(screen_buffer, true);
+
+    for (int i = 0; i < (state->column_count - message_length) / 2; i++) {
+        bufferAppend(screen_buffer, " ");
+    }
+    bufferAppend(screen_buffer, state->status_message);
+    for (int i = (state->column_count - message_length) / 2 + message_length; i < state->column_count; i++) {
+        bufferAppend(screen_buffer, " ");
+    }
+
+    enable_highlight(screen_buffer, false);
+    bufferAppend(screen_buffer, NEW_LINE);
+}
+
 void screen_draw(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, "\x1b[K"); // Clear line
+
+    draw_status_message(state, screen_buffer);
 
     if (state->dialog.show) {
         draw_dialog(state, screen_buffer);
