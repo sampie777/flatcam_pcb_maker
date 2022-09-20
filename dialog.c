@@ -13,6 +13,7 @@ void dialog_show_string(AppState *state, const char *title, const char *default_
     state->dialog.destination = destination;
     state->dialog.max_length = max_length;
     state->dialog.type = 's';
+    state->dialog.char_options[0] = '\0';
 }
 
 void dialog_show_char(AppState *state, const char *title, char default_value, char *destination) {
@@ -24,6 +25,7 @@ void dialog_show_char(AppState *state, const char *title, char default_value, ch
     state->dialog.destination = destination;
     state->dialog.max_length = 1;
     state->dialog.type = 'c';
+    state->dialog.char_options[0] = '\0';
 }
 
 void dialog_show_string_with_callback(AppState *state, const char *title, const char *default_value, char *destination, int max_length, void (*callback)(AppState *)) {
@@ -46,4 +48,18 @@ void dialog_confirm(AppState *state) {
     }
     state->dialog.show = 0;
     state->dialog.callback(state);
+}
+
+void dialog_options_show_char_with_callback(AppState *state, const char *title, char default_value, char *destination, void (*callback)(AppState *), const char *options) {
+    dialog_show_char_with_callback(state, title, default_value, destination, callback);
+    strcpy(state->dialog.char_options, options);
+    state->dialog.char_options[31] = '\0';
+
+    // Set default selection
+    for (int i = 0; i < strlen(state->dialog.char_options); i++) {
+        if (state->dialog.char_options[i] == default_value) {
+            state->dialog_selection = i;
+            break;
+        }
+    }
 }

@@ -12,6 +12,8 @@
 #endif
 
 int bound(int value, int min, int max, bool roll_over) {
+    if (max < min) return value;
+
     if (value < min) {
         if (roll_over)
             return max;

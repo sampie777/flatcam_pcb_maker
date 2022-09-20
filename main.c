@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdio.h>
 #include "common.h"
 #include "terminal_utils.h"
 #include "screen.h"
@@ -15,6 +14,11 @@
 #include "flatcam_generator.h"
 
 void selection_increase(AppState *state, int value) {
+    if (state->dialog.show) {
+        state->dialog_selection += value;
+        return;
+    }
+
     switch (state->screen) {
         case SCREEN_SELECT_PROJECT:
             state->project_selection += value;
@@ -24,11 +28,22 @@ void selection_increase(AppState *state, int value) {
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection += value;
+
+            if (state->flatcam_option_selection == FLATCAM_SILKSCREEN_MIRROR && state->flatcam_options.silkscreen_top == 'N' && state->flatcam_options.silkscreen_bottom == 'N') {
+                selection_increase(state, value);
+            }
+            break;
+        default:
             break;
     }
 }
 
 void selection_set(AppState *state, int value) {
+    if (state->dialog.show) {
+        state->dialog_selection = value;
+        return;
+    }
+
     switch (state->screen) {
         case SCREEN_SELECT_PROJECT:
             state->project_selection = value;
@@ -38,6 +53,8 @@ void selection_set(AppState *state, int value) {
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection = value;
+            break;
+        default:
             break;
     }
 }
@@ -50,7 +67,7 @@ void flatcam_screen_dialog_callback(AppState *state) {
             state->flatcam_options.mirror = 'Y';
         }
     }
-    state->flatcam_option_selection++;
+    selection_increase(state, 1);
 }
 
 void confirm_selection(AppState *state) {
@@ -64,7 +81,6 @@ void confirm_selection(AppState *state) {
             size_t size = strlen(state->projects[state->project_selection]) * sizeof(char);
             state->project = malloc(size + 1);
             strcpy(state->project, state->projects[state->project_selection]);
-            state->project[size] = '\0';
             state->screen = SCREEN_SELECT_ACTION;
             break;
         }
@@ -87,10 +103,10 @@ void confirm_selection(AppState *state) {
         case SCREEN_GENERATE_FLATCAM: {
             switch (state->flatcam_option_selection) {
                 case FLATCAM_COPPER_LAYER:
-                    dialog_show_char_with_callback(state, "Copper layer [T,B]", state->flatcam_options.traces, &(state->flatcam_options.traces), flatcam_screen_dialog_callback);
+                    dialog_options_show_char_with_callback(state, "Copper layer", state->flatcam_options.traces, &(state->flatcam_options.traces), flatcam_screen_dialog_callback, "TB");
                     break;
                 case FLATCAM_MIRROR:
-                    dialog_show_char_with_callback(state, "Mirror [Y,N]", state->flatcam_options.mirror, &(state->flatcam_options.mirror), flatcam_screen_dialog_callback);
+                    dialog_options_show_char_with_callback(state, "Mirror", state->flatcam_options.mirror, &(state->flatcam_options.mirror), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_OFFSET_X:
                     dialog_show_string_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7, flatcam_screen_dialog_callback);
@@ -105,13 +121,13 @@ void confirm_selection(AppState *state) {
                     dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
-                    dialog_show_char_with_callback(state, "Silkscreen top [Y,N]", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback);
+                    dialog_options_show_char_with_callback(state, "Silkscreen top", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_SILKSCREEN_BOTTOM:
-                    dialog_show_char_with_callback(state, "Silkscreen bottom [Y,N]", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom), flatcam_screen_dialog_callback);
+                    dialog_options_show_char_with_callback(state, "Silkscreen bottom", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_SILKSCREEN_MIRROR:
-                    dialog_show_char_with_callback(state, "Mirror silkscreen [Y,N]", state->flatcam_options.silkscreen_mirror, &(state->flatcam_options.silkscreen_mirror), flatcam_screen_dialog_callback);
+                    dialog_options_show_char_with_callback(state, "Mirror silkscreen", state->flatcam_options.silkscreen_mirror, &(state->flatcam_options.silkscreen_mirror), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_BUTTON_GENERATE:
                     flatcam_generate(state);
@@ -162,7 +178,7 @@ void editorProcessKeypress(AppState *state) {
             break;
         }
         default:
-            if (state->dialog.show) {
+            if (state->dialog.show && strlen(state->dialog.char_options) == 0) {
                 size_t length = strlen(state->dialog.value);
                 if (length < 63 && length < state->dialog.max_length) {
                     state->dialog.value[length] = (char) c;
@@ -179,6 +195,10 @@ void app_control(AppState *state) {
     state->project_selection = bound(state->project_selection, 0, state->projects_count - 1, true);
     state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
+    state->dialog_selection = bound(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
+    if (strlen(state->dialog.char_options) > 0 && state->dialog.type == 'c') {
+        state->dialog.value[0] = state->dialog.char_options[state->dialog_selection];
+    }
 
     state->flatcam_options.traces = (char) toupper(state->flatcam_options.traces);
     state->flatcam_options.mirror = (char) toupper(state->flatcam_options.mirror);

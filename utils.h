@@ -7,6 +7,9 @@
 
 #include <stdbool.h>
 
+#define max(x, y) (((x) > (y)) ? (x) : (y))
+#define min(x, y) (((x) < (y)) ? (x) : (y))
+
 int bound(int value, int min, int max, bool roll_over);
 
 void copy_to_clipboard(const char *data);

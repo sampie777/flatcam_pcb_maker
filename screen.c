@@ -181,13 +181,21 @@ void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
-    bufferAppend(screen_buffer, "  ");
-    enable_highlight(screen_buffer, 1);
-    char buffer2[256];
-    sprintf(buffer2, "%s%s", state->dialog.value, strlen(state->dialog.value) < state->dialog.max_length ? "_" : "");
-    sprintf(buffer, " %-*s ", state->dialog.max_length, buffer2);
-    bufferAppend(screen_buffer, buffer);
-    enable_highlight(screen_buffer, 0);
+    if (strlen(state->dialog.char_options) == 0) {
+        bufferAppend(screen_buffer, "  ");
+        enable_highlight(screen_buffer, 1);
+        char buffer2[256];
+        sprintf(buffer2, "%s%s", state->dialog.value, strlen(state->dialog.value) < state->dialog.max_length ? "_" : "");
+        sprintf(buffer, " %-*s ", state->dialog.max_length, buffer2);
+        bufferAppend(screen_buffer, buffer);
+        enable_highlight(screen_buffer, 0);
+    } else {
+        for (int i = 0; i < strlen(state->dialog.char_options); i++) {
+            sprintf(buffer, "%c", state->dialog.char_options[i]);
+            draw_option(screen_buffer, i, buffer, state->dialog_selection == i);
+        }
+    }
+
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, "Press <Enter> to confirm");

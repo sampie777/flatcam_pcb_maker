@@ -74,6 +74,7 @@ typedef struct {
     int max_length;
     void (*callback)(void*);
     char type;
+    char char_options[32];
 } DialogOptions;
 
 typedef struct {
@@ -87,6 +88,7 @@ typedef struct {
     int project_selection;
     int action_selection;
     int flatcam_option_selection;
+    int dialog_selection;
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
 } AppState;
