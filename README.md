@@ -6,7 +6,7 @@ The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software. I
 
 1. Create and design your PCB in EAGLE.
    (Make sure to set the ground plane polygom to layer tTest or similar before exporting CAM to prevent it from being etched.)
-2. Generate gerber and excellon files using the CAM processer in EAGLE.
+2. Generate gerber and excellon files using the CAM processer in EAGLE. Note: disable 'cutouts' in the profile section.
 3. Open this tool and choose your project.
 4. Generate the commands for FlatCAM.
 5. Paste these commands in the console of FlatCAM (these commands are automatically copied to your clipboard).
