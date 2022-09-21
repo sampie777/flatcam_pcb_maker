@@ -5,7 +5,8 @@
 #ifndef FLATCAM_PCB_MAKER_COMMON_H
 #define FLATCAM_PCB_MAKER_COMMON_H
 
-#define PROJECTS_PATH "/home/samuel/workspace/c/flatcam_pcb_maker/.files"
+#include "local_settings.h"
+
 #define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
 #define SILKSCREEN_OUTPUT_FILE "1_draw_silkscreen.gcode"
 #define DRILLS_CHECK_OUTPUT_FILE "2_check_holes.gcode"
@@ -84,6 +85,7 @@ typedef struct {
     int row_count;
     int column_count;
     enum Screens screen;
+    char *projects_path;
     char **projects;
     char *project;
     int projects_count;

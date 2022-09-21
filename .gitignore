@@ -6,3 +6,4 @@ flatcam_pcb_maker
 test.txt
 .files/
 flatcam_pcb_maker.exe
+local_settings.h

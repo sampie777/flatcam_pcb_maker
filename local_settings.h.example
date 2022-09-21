@@ -1,0 +1,10 @@
+//
+// Created by samuel on 21-9-22.
+//
+
+#ifndef FLATCAM_PCB_MAKER_LOCAL_SETTINGS_H_EXAMPLE_H
+#define FLATCAM_PCB_MAKER_LOCAL_SETTINGS_H_EXAMPLE_H
+
+//#define PROJECTS_PATH "C:/Users/<user>/Documents/EAGLE/projects"
+
+#endif //FLATCAM_PCB_MAKER_LOCAL_SETTINGS_H_EXAMPLE_H

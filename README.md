@@ -16,6 +16,8 @@ The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software. I
 
 ## Build
 
+1. Copy and rename `local_settings.h.example` to `local_settings.h` and uncomment/edit the values if needed.
+
 ### Linux
 
 1. Run `make`.

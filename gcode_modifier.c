@@ -25,7 +25,7 @@
 
 int replace_file_with_tempfile(AppState *state, const char *filename) {
     char buffer[256];
-    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", PROJECTS_PATH, state->project, filename);
+    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", state->projects_path, state->project, filename);
     int result = copy_file(TEMP_FILE_NAME, buffer);
     if (result != RESULT_OK) {
         sprintf(state->status_message, "Failed to modify file %s", buffer);
@@ -36,7 +36,7 @@ int replace_file_with_tempfile(AppState *state, const char *filename) {
 
 int open_files(AppState *state, const char *filename, FILE **input_file, FILE **output_file) {
     char buffer[256];
-    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", PROJECTS_PATH, state->project, filename);
+    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", state->projects_path, state->project, filename);
     *input_file = fopen(buffer, "r");
     *output_file = fopen(TEMP_FILE_NAME, "w");
 

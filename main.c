@@ -247,13 +247,22 @@ int main() {
     };
     state.status_message[0] = '\0';
 
+    char projects_path[64];
+#ifndef PROJECTS_PATH
+    sprintf(projects_path, "%s/Documents/EAGLE/projects", getenv("USERPROFILE"));
+#else
+    sprintf(projects_path, "%s", PROJECTS_PATH);
+#endif
+    state.projects_path = malloc(strlen(projects_path) + 1);
+    strcpy(state.projects_path, projects_path);
+
     enableRawMode();
 
     if (getWindowSize(&state.row_count, &state.column_count) == -1)
         die("Failed to get window size");
 
 
-    files_get_all_projects(PROJECTS_PATH, &state.projects, &state.projects_count);
+    files_get_all_projects(state.projects_path, &state.projects, &state.projects_count);
 
     while (1) {
         app_control(&state);

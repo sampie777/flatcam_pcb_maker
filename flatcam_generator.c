@@ -25,7 +25,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                    "follow silkscreen_top -outname silkscreen_top.follow\n"
                                    "offset silkscreen_top.follow %s %s\n"
                                    "%s",
-                PROJECTS_PATH, state->project,
+                state->projects_path, state->project,
                 state->flatcam_options.offset_x, state->flatcam_options.offset_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
@@ -37,7 +37,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                       "follow silkscreen_bottom -outname silkscreen_bottom.follow\n"
                                       "offset silkscreen_bottom.follow %s %s\n"
                                       "%s",
-                PROJECTS_PATH, state->project,
+                state->projects_path, state->project,
                 state->flatcam_options.offset_x, state->flatcam_options.offset_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
@@ -51,7 +51,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
             should_silkscreen_top ? "silkscreen_top.follow" : "",
             should_silkscreen_bottom ? "silkscreen_bottom.follow" : "",
             state->flatcam_options.feedrate_etch,
-            PROJECTS_PATH, state->project, SILKSCREEN_OUTPUT_FILE
+            state->projects_path, state->project, SILKSCREEN_OUTPUT_FILE
     );
 }
 
@@ -88,27 +88,27 @@ void generate_script(const AppState *state) {
                     "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\""
                     "%s"
                     "%s",
-            PROJECTS_PATH, state->project,
+            state->projects_path, state->project,
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             should_mirror ? "mirror profile -axis Y -box profile\n" : "",
 
-            PROJECTS_PATH, state->project, traces_file,
+            state->projects_path, state->project, traces_file,
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width,
 
             state->flatcam_options.feedrate_etch,
-            PROJECTS_PATH, state->project, TRACES_OUTPUT_FILE,
+            state->projects_path, state->project, TRACES_OUTPUT_FILE,
 
-            PROJECTS_PATH, state->project,
+            state->projects_path, state->project,
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
-            PROJECTS_PATH, state->project, DRILLS_CHECK_OUTPUT_FILE,
-            PROJECTS_PATH, state->project, DRILLS_OUTPUT_FILE,
+            state->projects_path, state->project, DRILLS_CHECK_OUTPUT_FILE,
+            state->projects_path, state->project, DRILLS_OUTPUT_FILE,
 
             silkscreen_output ? silkscreen_output : "",
             should_mirror ? "" : "\nplot"
@@ -120,7 +120,7 @@ void generate_script(const AppState *state) {
 
     // Check if output folder exists
     char buffer[256];
-    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM", PROJECTS_PATH, state->project);
+    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM", state->projects_path, state->project);
     struct stat st;
     if (stat(buffer, &st) != 0) {
         // Creating output directory
