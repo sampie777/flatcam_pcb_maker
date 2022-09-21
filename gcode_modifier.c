@@ -64,6 +64,7 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
     *max_y = 0;
 
     bool at_least_one_found = false;
+    int command;
     double x, y;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
@@ -71,9 +72,10 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
             continue;
         }
 
-        if (sscanf(line, "G01 X%lfY%lf", &x, &y) != 2) {
+        if (sscanf(line, "G0%d X%lfY%lf", &command, &x, &y) != 3) {
             continue;
         }
+        if (command > 1) continue;
 
         if (x < *min_x) *min_x = x;
         if (x > *max_x) *max_x = x;
