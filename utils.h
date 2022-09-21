@@ -14,7 +14,9 @@
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-int bound(int value, int min, int max, bool roll_over);
+int bound_int(int value, int min, int max, bool roll_over);
+
+double bound_double(double value, double min, double max);
 
 void copy_to_clipboard(const char *data);
 

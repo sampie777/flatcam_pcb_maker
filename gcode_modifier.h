@@ -9,4 +9,6 @@
 
 void gcode_modify(AppState *state);
 
+int modify_silkscreen_file(AppState *state);
+
 #endif //FLATCAM_PCB_MAKER_GCODE_MODIFIER_H

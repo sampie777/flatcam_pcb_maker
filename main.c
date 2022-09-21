@@ -209,10 +209,10 @@ void editorProcessKeypress(AppState *state) {
 void app_control(AppState *state) {
     static time_t status_message_start_time = 0;
 
-    state->project_selection = bound(state->project_selection, 0, state->projects_count, true);
-    state->action_selection = bound(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
-    state->flatcam_option_selection = bound(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
-    state->dialog_selection = bound(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
+    state->project_selection = bound_int(state->project_selection, 0, state->projects_count, true);
+    state->action_selection = bound_int(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
+    state->flatcam_option_selection = bound_int(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
+    state->dialog_selection = bound_int(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
     if (strlen(state->dialog.char_options) > 0 && state->dialog.type == 'c') {
         state->dialog.value[0] = state->dialog.char_options[state->dialog_selection];
     }
