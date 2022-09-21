@@ -54,7 +54,7 @@ function pushAndRelease {
   RELEASE_VERSION="$1"
   echo "Release version: ${RELEASE_VERSION}"
 
-  git commit -m "version release: ${RELEASE_VERSION}" || exit 1
+  git commit -m "version release: ${RELEASE_VERSION}"
   git tag "v${RELEASE_VERSION}" || exit 1
   git push -u origin master --tags || exit 1
 }
