@@ -168,6 +168,7 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     draw_text_field_string(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
     draw_text_field_string(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
     draw_text_field_string(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
+    draw_text_field_string(screen_buffer, "Iterations", state->flatcam_options.iterations, state->flatcam_option_selection == FLATCAM_ITERATIONS);
 
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, "Silkscreen");

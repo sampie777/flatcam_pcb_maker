@@ -135,6 +135,9 @@ void confirm_selection(AppState *state) {
                 case FLATCAM_FEEDRATE:
                     dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
+                case FLATCAM_ITERATIONS:
+                    dialog_show_string_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations[0]), 7, flatcam_screen_dialog_callback);
+                    break;
                 case FLATCAM_SILKSCREEN_TOP:
                     dialog_options_show_char_with_callback(state, "Silkscreen top", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback, "YN");
                     break;
@@ -241,6 +244,7 @@ int main() {
             .flatcam_options.offset_y = "29",
             .flatcam_options.dia_width = "0.20188",
             .flatcam_options.feedrate_etch = "1400",
+            .flatcam_options.iterations = "10",
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',

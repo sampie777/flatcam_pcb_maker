@@ -73,7 +73,7 @@ void generate_script(const AppState *state) {
                     "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname traces\n"
                     "offset traces %s %s\n"
                     "%s"
-                    "isolate traces -dia %s -passes 10 -overlap 1 -combine 1 -outname traces.iso\n"
+                    "isolate traces -dia %s -passes %s -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
                     "join_geometries joined profile_cutout traces.iso\n"
                     "cncjob joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
@@ -97,7 +97,7 @@ void generate_script(const AppState *state) {
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
-            state->flatcam_options.dia_width,
+            state->flatcam_options.dia_width, state->flatcam_options.iterations,
 
             state->flatcam_options.feedrate_etch,
             state->projects_path, state->project, TRACES_OUTPUT_FILE,

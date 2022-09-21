@@ -49,6 +49,7 @@ enum FlatcamOptions {
     FLATCAM_OFFSET_Y,
     FLATCAM_DIA_WIDTH,
     FLATCAM_FEEDRATE,
+    FLATCAM_ITERATIONS,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
@@ -64,6 +65,7 @@ typedef struct {
     char offset_y[8];
     char dia_width[10];
     char feedrate_etch[8];
+    char iterations[8];
     char silkscreen_top;
     char silkscreen_bottom;
     char silkscreen_mirror;
