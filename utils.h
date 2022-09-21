@@ -20,4 +20,6 @@ void copy_to_clipboard(const char *data);
 
 bool starts_with(const char *source, const char *needle);
 
+void string_replace(char *input, char needle, char replacement);
+
 #endif //FLATCAM_PCB_MAKER_UTILS_H

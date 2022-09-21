@@ -253,6 +253,7 @@ int main() {
 #else
     sprintf(projects_path, "%s", PROJECTS_PATH);
 #endif
+    string_replace(projects_path, '\\', '/');
     state.projects_path = malloc(strlen(projects_path) + 1);
     strcpy(state.projects_path, projects_path);
 

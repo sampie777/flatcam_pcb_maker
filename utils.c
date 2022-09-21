@@ -54,3 +54,16 @@ void copy_to_clipboard(const char *data) {
 bool starts_with(const char *source, const char *needle) {
     return strncmp(needle, source, strlen(needle)) == 0;
 }
+
+void string_replace(char *input, char needle, char replacement) {
+    char *buffer = malloc(strlen(input) + 1);
+    memset(buffer, '\0', strlen(input) + 1);
+    for (int i = 0; i < strlen(input); i++) {
+        if (input[i] == needle) {
+            buffer[i] = replacement;
+        } else {
+            buffer[i] = input[i];
+        }
+    }
+    strcpy(input, buffer);
+}
