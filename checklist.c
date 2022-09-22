@@ -29,6 +29,7 @@ const char *checklist_checks[] = {
         "Turn printer off",
         "Remove board from clamp",
         "Gentle blow off any copper dust",
+        "Mark GND pads with a permanent marker",
         "Put board in etching solution",
         "Remove board from etching solution",
         "Clean the board",
