@@ -1,2 +1,2 @@
-rm flatcam_pbc_maker.exe
+rm flatcam_pcb_maker.exe
 make
