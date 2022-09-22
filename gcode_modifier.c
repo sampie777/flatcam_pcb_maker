@@ -94,15 +94,16 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
     return RESULT_OK;
 }
 
-void limit_line_to_bounds(char **line, double min_x, double min_y, double max_x, double max_y) {
+bool limit_line_to_bounds(char **line, double min_x, double min_y, double max_x, double max_y, bool ignore_origin) {
     int command;
     double x, y;
     if (sscanf(*line, "G0%d X%lfY%lf", &command, &x, &y) != 3) {
-        return;
+        return false;
     }
-    if (command > 1) return;
+    if (command > 1) return false;
 
-    if (x >= min_x && x <= max_x && y > min_y && y < max_y) return;
+    if (ignore_origin && x == 0 && y == 0) return false;
+    if (x >= min_x && x <= max_x && y > min_y && y < max_y) return false;
 
     x = bound_double(x, min_x, max_x);
     y = bound_double(y, min_y, max_y);
@@ -111,17 +112,23 @@ void limit_line_to_bounds(char **line, double min_x, double min_y, double max_x,
         *line = malloc(32);
     }
     sprintf(*line, "G0%d X%.4lfY%.4lf", command, x, y);
+    return true;
 }
 
 int modify_drill_file(AppState *state) {
+    double min_x, min_y, max_x, max_y;
+    int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
+    if (result != RESULT_OK) return result;
+
     FILE *file, *temp_file;
-    int result = open_files(state, DRILLS_OUTPUT_FILE, &file, &temp_file);
+    result = open_files(state, DRILLS_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
     bool pause_print_present = false;
     bool use_mesh_present = false;
     bool end_print_beep_present = false;
 
+    bool removed_a_hole = false;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
         if (starts_with(line, "F")) {
@@ -144,11 +151,11 @@ int modify_drill_file(AppState *state) {
         }
 
         if (strcmp(line, "G01 Z-3.0000") == 0) {
-            fprintf(temp_file, "G01 Z3.2000\nG01 Z0.0000 F10.0\n");
+            if (!removed_a_hole) fprintf(temp_file, "G01 Z3.2000\nG01 Z0.0000 F10.0\n");
             continue;
         }
         if (strcmp(line, "G01 Z0") == 0) {
-            fprintf(temp_file, "G01 Z3.2 F50.0\n");
+            if (!removed_a_hole) fprintf(temp_file, "G01 Z3.2 F50.0\n");
             continue;
         }
         if (strcmp(line, "G00 Z1.5000") == 0) {
@@ -168,6 +175,14 @@ int modify_drill_file(AppState *state) {
             use_mesh_present = true;
         } else if (strcmp(line, G_BEEP_END) == 0) {
             end_print_beep_present = true;
+        } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
+            removed_a_hole = false;
+            if (limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true)) {
+                // Remove these holes completely
+                removed_a_hole = true;
+                fprintf(temp_file, "; Removed hole because it's out of bounds: %s\n", line);
+                continue;
+            }
         }
 
         fprintf(temp_file, "%s\n", line);
@@ -180,12 +195,17 @@ int modify_drill_file(AppState *state) {
 }
 
 int modify_check_holes_file(AppState *state) {
+    double min_x, min_y, max_x, max_y;
+    int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
+    if (result != RESULT_OK) return result;
+
     FILE *file, *temp_file;
-    int result = open_files(state, DRILLS_CHECK_OUTPUT_FILE, &file, &temp_file);
+    result = open_files(state, DRILLS_CHECK_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
     bool use_mesh_present = false;
 
+    bool removed_a_hole = false;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
         if (starts_with(line, "F")) {
@@ -193,11 +213,11 @@ int modify_check_holes_file(AppState *state) {
             continue;
         }
         if (strcmp(line, "G01 Z0") == 0) {
-            fprintf(temp_file, G_PAUSE" ; Pause\n"G_BEEP"\n");
+            if (!removed_a_hole) fprintf(temp_file, G_PAUSE" ; Pause\n"G_BEEP"\n");
             continue;
         }
         if (strcmp(line, "G01 Z0.3000") == 0) {
-            fprintf(temp_file, "G01 Z0.3000 F100.0\n");
+            if (!removed_a_hole) fprintf(temp_file, "G01 Z0.3000 F100.0\n");
             continue;
         }
         if (strcmp(line, "G00 Z2.5000") == 0) {
@@ -210,6 +230,14 @@ int modify_check_holes_file(AppState *state) {
             use_mesh_present = true;
         } else if (strcmp(line, G_USE_MESH) == 0) {
             use_mesh_present = true;
+        } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
+            removed_a_hole = false;
+            if (limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true)) {
+                // Remove these holes completely
+                removed_a_hole = true;
+                fprintf(temp_file, "; Removed hole because it's out of bounds: %s\n", line);
+                continue;
+            }
         }
 
         fprintf(temp_file, "%s\n", line);
@@ -292,7 +320,7 @@ int modify_silkscreen_file(AppState *state) {
         } else if (strcmp(line, G_BEEP_END) == 0) {
             end_print_beep_present = true;
         } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
-            limit_line_to_bounds(&line, min_x, min_y, max_x, max_y);
+            limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true);
         }
 
         fprintf(temp_file, "%s\n", line);
