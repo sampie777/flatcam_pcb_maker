@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include "screen.h"
 #include "utils.h"
+#include "checklist.h"
 
 #define NEW_LINE "\r\n\x1b[K"
 
@@ -194,12 +195,33 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
 }
 
 void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
+    char buffer[256];
     bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "CHECKLIST");
+    sprintf(buffer, "CHECKLIST  [%d/%d]", state->checklist_check_position, checklist_length);
+    bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
-    draw_button(screen_buffer, "Back", true);
+    int max_items = state->row_count - 10;
+    int start_index = max(0, state->checklist_check_position - max_items);
+    for (int i = start_index; i <= state->checklist_check_position + 1 && i < checklist_length; i++) {
+        bool highlight = i == state->checklist_check_position && state->checklist_selection == CHECKLIST_NEXT_CHECK;
+
+        if (highlight) enable_highlight(screen_buffer, true);
+
+        if (checklist_checks[i][0] == '-') {
+            sprintf(buffer, "      %s ", checklist_checks[i]);
+        } else {
+            sprintf(buffer, " [%c]  %s ", i < state->checklist_check_position ? 'X' : ' ', checklist_checks[i]);
+        }
+        bufferAppend(screen_buffer, buffer);
+
+        if (highlight) enable_highlight(screen_buffer, false);
+        bufferAppend(screen_buffer, NEW_LINE);
+    }
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    draw_button(screen_buffer, "Back", state->checklist_selection == CHECKLIST_BUTTON_BACK);
 }
 
 void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {

@@ -58,6 +58,12 @@ enum FlatcamOptions {
     FLATCAM_MAX_VALUE
 };
 
+enum ChecklistActions {
+    CHECKLIST_NEXT_CHECK = 0,
+    CHECKLIST_BUTTON_BACK,
+    CHECKLIST_MAX_VALUE
+};
+
 typedef struct {
     char traces;
     char mirror;
@@ -79,7 +85,7 @@ typedef struct {
     char *destination_char;
     double *destination_double;
     int max_length;
-    void (*callback)(void*);
+    void (*callback)(void *);
     char type;
     char char_options[32];
 } DialogOptions;
@@ -97,6 +103,8 @@ typedef struct {
     int action_selection;
     int flatcam_option_selection;
     int dialog_selection;
+    int checklist_selection;
+    int checklist_check_position;
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
     char status_message[256];

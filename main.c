@@ -15,6 +15,7 @@
 #include "dialog.h"
 #include "flatcam_generator.h"
 #include "gcode_modifier.h"
+#include "checklist.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -35,6 +36,9 @@ void selection_increase(AppState *state, int value) {
             if (state->flatcam_option_selection == FLATCAM_SILKSCREEN_MIRROR && state->flatcam_options.silkscreen_top == 'N' && state->flatcam_options.silkscreen_bottom == 'N') {
                 selection_increase(state, value);
             }
+            break;
+        case SCREEN_SHOW_CHECKLIST:
+            state->checklist_selection += value;
             break;
         default:
             break;
@@ -104,6 +108,8 @@ void confirm_selection(AppState *state) {
                     break;
                 case ACTION_SHOW_CHECKLIST:
                     state->screen = SCREEN_SHOW_CHECKLIST;
+                    state->checklist_check_position = 0;
+                    state->checklist_selection = CHECKLIST_NEXT_CHECK;
                     break;
                 case ACTION_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_PROJECT;
@@ -112,7 +118,11 @@ void confirm_selection(AppState *state) {
             break;
         }
         case SCREEN_SHOW_CHECKLIST: {
-            state->screen = SCREEN_SELECT_ACTION;
+            if (state->checklist_selection == CHECKLIST_BUTTON_BACK) {
+                state->screen = SCREEN_SELECT_ACTION;
+            } else {
+                state->checklist_check_position++;
+            }
             break;
         }
         case SCREEN_GENERATE_FLATCAM: {
@@ -212,9 +222,18 @@ void editorProcessKeypress(AppState *state) {
 void app_control(AppState *state) {
     static time_t status_message_start_time = 0;
 
+    if (state->checklist_check_position < checklist_length && checklist_checks[state->checklist_check_position][0] == '-') {
+        state->checklist_check_position++;
+    }
+    if (state->checklist_check_position >= checklist_length) {
+        state->checklist_selection = CHECKLIST_BUTTON_BACK;
+    }
+
     state->project_selection = bound_int(state->project_selection, 0, state->projects_count, true);
     state->action_selection = bound_int(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound_int(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
+    state->checklist_selection = bound_int(state->checklist_selection, 0, CHECKLIST_MAX_VALUE - 1, true);
+    state->checklist_check_position = bound_int(state->checklist_check_position, 0, checklist_length, false);
     state->dialog_selection = bound_int(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
     if (strlen(state->dialog.char_options) > 0 && state->dialog.type == 'c') {
         state->dialog.value[0] = state->dialog.char_options[state->dialog_selection];
