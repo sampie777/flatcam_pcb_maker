@@ -79,3 +79,57 @@ void string_replace(char *input, char needle, char replacement) {
     }
     strcpy(input, buffer);
 }
+
+void auto_format_double(double input, char **destination) {
+    char buffer[64], output[64];
+    sprintf(buffer, "%lf", input);
+    memset(output, '\0', sizeof(output));
+
+    bool non_zero_found = false;
+    for (int i = (int) strlen(buffer) - 1; i >= 0; i--) {
+        if (!non_zero_found) {
+            if (buffer[i] == '0') continue;
+            if (buffer[i] == '.') {
+                non_zero_found = true;
+                continue;
+            }
+            non_zero_found = true;
+        }
+
+        output[i] = buffer[i];
+    }
+
+    if (destination == NULL || *destination == NULL || strlen(*destination) < strlen(output)) {
+        *destination = malloc(strlen(output) + 1);
+    }
+    strcpy(*destination, output);
+}
+
+void auto_format_double_string(char *input) {
+    char output[64] = {0};
+    bool non_zero_found = false;
+    bool decimal_found = false;
+    for (int i = (int) strlen(input) - 1; i >= 0; i--) {
+        if (input[i] == '.') {
+            decimal_found = true;
+        }
+
+        if (!non_zero_found) {
+            if (input[i] == '0') continue;
+            if (input[i] == '.') {
+                non_zero_found = true;
+                continue;
+            }
+            non_zero_found = true;
+        }
+
+        output[i] = input[i];
+    }
+
+    if (!decimal_found) {
+        // Nothing to change
+        return;
+    }
+
+    strcpy(input, output);
+}

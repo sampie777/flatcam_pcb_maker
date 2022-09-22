@@ -61,8 +61,8 @@ enum FlatcamOptions {
 typedef struct {
     char traces;
     char mirror;
-    char offset_x[8];
-    char offset_y[8];
+    double offset_x;
+    double offset_y;
     char dia_width[10];
     char feedrate_etch[8];
     char iterations[8];
@@ -76,7 +76,8 @@ typedef struct {
     char title[64];
     char default_value[64];
     char value[64];
-    char *destination;
+    char *destination_char;
+    double *destination_double;
     int max_length;
     void (*callback)(void*);
     char type;

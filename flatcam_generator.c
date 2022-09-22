@@ -23,7 +23,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
     if (should_silkscreen_top) {
         sprintf(traces_top_output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_top.gbr\" -follow 1 -outname silkscreen_top\n"
                                    "follow silkscreen_top -outname silkscreen_top.follow\n"
-                                   "offset silkscreen_top.follow %s %s\n"
+                                   "offset silkscreen_top.follow %lf %lf\n"
                                    "%s",
                 state->projects_path, state->project,
                 state->flatcam_options.offset_x, state->flatcam_options.offset_y,
@@ -35,7 +35,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
     if (should_silkscreen_bottom) {
         sprintf(traces_bottom_output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_bottom.gbr\" -follow 1 -outname silkscreen_bottom\n"
                                       "follow silkscreen_bottom -outname silkscreen_bottom.follow\n"
-                                      "offset silkscreen_bottom.follow %s %s\n"
+                                      "offset silkscreen_bottom.follow %lf %lf\n"
                                       "%s",
                 state->projects_path, state->project,
                 state->flatcam_options.offset_x, state->flatcam_options.offset_y,
@@ -66,12 +66,12 @@ void generate_script(const AppState *state) {
 
     char output[2048];
     sprintf(output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/profile.gbr\" -outname profile\n"
-                    "offset profile %s %s\n"
+                    "offset profile %lf %lf\n"
                     "%s"
                     "cutout profile -dia 0.1 -margin -0.2 -gapsize 0.0 -gaps tb\n"
                     "\n"
                     "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname traces\n"
-                    "offset traces %s %s\n"
+                    "offset traces %lf %lf\n"
                     "%s"
                     "isolate traces -dia %s -passes %s -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
@@ -80,7 +80,7 @@ void generate_script(const AppState *state) {
                     "write_gcode joined_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "\n"
                     "open_excellon \"%s/%s/CAMOutputs/DrillFiles/drill_1_16.xln\" -outname drills\n"
-                    "offset drills %s %s\n"
+                    "offset drills %lf %lf\n"
                     "%s"
                     "drillcncjob drills -drillz 0.3 -travelz 2.5 -feedrate 1000.0 -tools 1 -outname check_holes_cnc\n"
                     "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4 -outname drill_holes_cnc\n"

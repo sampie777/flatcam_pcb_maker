@@ -68,7 +68,7 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
     double x, y;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
-        if (!starts_with(line, "G01 X")) {
+        if (!(starts_with(line, "G01 X") || starts_with(line, "G00 X"))) {
             continue;
         }
 
@@ -76,6 +76,7 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
             continue;
         }
         if (command > 1) continue;
+        if (x == 0 && y == 0) continue;
 
         if (x < *min_x) *min_x = x;
         if (x > *max_x) *max_x = x;
@@ -260,6 +261,11 @@ int modify_silkscreen_file(AppState *state) {
     double min_x, min_y, max_x, max_y;
     int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
     if (result != RESULT_OK) return result;
+
+    if (min_x < state->flatcam_options.offset_x || min_y < state->flatcam_options.offset_y) {
+        strcpy(state->status_message, "Some traces are out of bounds!");
+        return RESULT_FAILED;
+    }
 
     FILE *file, *temp_file;
     result = open_files(state, SILKSCREEN_OUTPUT_FILE, &file, &temp_file);

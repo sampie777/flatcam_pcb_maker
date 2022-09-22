@@ -124,10 +124,10 @@ void confirm_selection(AppState *state) {
                     dialog_options_show_char_with_callback(state, "Mirror", state->flatcam_options.mirror, &(state->flatcam_options.mirror), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_OFFSET_X:
-                    dialog_show_string_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_OFFSET_Y:
-                    dialog_show_string_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_DIA_WIDTH:
                     dialog_show_string_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9, flatcam_screen_dialog_callback);
@@ -240,8 +240,8 @@ int main() {
     AppState state = {
             .flatcam_options.traces = 'B',
             .flatcam_options.mirror = 'Y',
-            .flatcam_options.offset_x = "20",
-            .flatcam_options.offset_y = "29",
+            .flatcam_options.offset_x = 20,
+            .flatcam_options.offset_y = 29,
             .flatcam_options.dia_width = "0.20188",
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = "10",

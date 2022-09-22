@@ -24,4 +24,6 @@ bool starts_with(const char *source, const char *needle);
 
 void string_replace(char *input, char needle, char replacement);
 
+void auto_format_double_string(char *input);
+
 #endif //FLATCAM_PCB_MAKER_UTILS_H

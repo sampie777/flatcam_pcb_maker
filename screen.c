@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "screen.h"
+#include "utils.h"
 
 #define NEW_LINE "\r\n\x1b[K"
 
@@ -160,12 +161,20 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
+    char buffer[64];
     bufferAppend(screen_buffer, "Traces & drills");
     bufferAppend(screen_buffer, NEW_LINE);
     draw_text_field_char(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
     draw_text_field_char(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
-    draw_text_field_string(screen_buffer, "Offset X", state->flatcam_options.offset_x, state->flatcam_option_selection == FLATCAM_OFFSET_X);
-    draw_text_field_string(screen_buffer, "Offset Y", state->flatcam_options.offset_y, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
+
+    sprintf(buffer, "%lf", state->flatcam_options.offset_x);
+    auto_format_double_string(buffer);
+    draw_text_field_string(screen_buffer, "Offset X", buffer, state->flatcam_option_selection == FLATCAM_OFFSET_X);
+
+    sprintf(buffer, "%lf", state->flatcam_options.offset_y);
+    auto_format_double_string(buffer);
+    draw_text_field_string(screen_buffer, "Offset Y", buffer, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
+
     draw_text_field_string(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
     draw_text_field_string(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
     draw_text_field_string(screen_buffer, "Iterations", state->flatcam_options.iterations, state->flatcam_option_selection == FLATCAM_ITERATIONS);
