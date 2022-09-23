@@ -15,10 +15,17 @@
 #define GND_PAD_MIN_MATCH_RATIO 0.1
 
 double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double y) {
-    double pad_x = state->flatcam_options.offset_x + pad->x + pad->package_pad.x;
-    double pad_y = state->flatcam_options.offset_y + pad->y + pad->package_pad.y;
+    double alpha = pad->rotation / 180 * M_PI;
+    // Rotation matrix
+    double rotated_pad_x = pad->package_pad.x * cos(alpha) - pad->package_pad.y * sin(alpha);
+    double rotated_pad_y = pad->package_pad.x * sin(alpha) + pad->package_pad.y * cos(alpha);
 
-    // todo: include part rotation
+    if (pad->inverted) {
+        rotated_pad_x *= -1;
+    }
+
+    double pad_x = state->flatcam_options.offset_x + pad->x + rotated_pad_x;
+    double pad_y = state->flatcam_options.offset_y + pad->y + rotated_pad_y;
 
     double diff_x = pad_x - x;
     double diff_y = pad_y - y;
