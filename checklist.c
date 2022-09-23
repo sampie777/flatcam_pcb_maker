@@ -37,7 +37,7 @@ const char *checklist_checks[] = {
         "-- Silkscreen --",
         "Put board back in clamp",
         "Measure distance from clamp left side to left side of profile",
-        "Make sure this distance is available on the right sid of the board",
+        "Make sure this distance is available on the right side of the board",
         "Flip over board and make sure the correct distance is maintained between the clamp and the profile",
         "Turn on Dremel to 14000 RPM",
         "Start 1_draw_silkscreen print",

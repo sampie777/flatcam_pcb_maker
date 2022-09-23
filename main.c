@@ -16,6 +16,7 @@
 #include "flatcam_generator.h"
 #include "gcode_modifier.h"
 #include "checklist.h"
+#include "eagle_board_parser.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -269,6 +270,10 @@ int main() {
             .flatcam_options.silkscreen_mirror = 'N',
     };
     state.status_message[0] = '\0';
+
+    int result = eagle_board_parse(&state, "./.files/carcomputer.xml");
+    printf("Result: %d\nStatus message: %s\n", result, state.status_message);
+    return 0;
 
     char projects_path[64];
 #ifndef PROJECTS_PATH
