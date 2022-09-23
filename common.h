@@ -90,6 +90,44 @@ typedef struct {
     char char_options[32];
 } DialogOptions;
 
+typedef enum {
+    SHAPE_UNKNOWN = 0,
+    SHAPE_ROUND,
+    SHAPE_OCTAGON,
+    SHAPE_SQUARE,
+    SHAPE_LONG
+} PadShape;
+
+typedef struct {
+    char *name;
+    double x;
+    double y;
+    double rotation;
+    double drill_size;
+    double diameter;
+    PadShape shape;
+} PackagePad;
+
+typedef struct {
+    char *name;
+    char *library;
+    char *package;
+    PackagePad package_pad;
+    double x;
+    double y;
+    double rotation;
+} GndPad;
+
+typedef struct {
+    struct {
+        double pad_hole_to_mask_ratio;
+        double pad_min_mask_diameter;
+        double pad_max_mask_diameter;
+    } design_rules;
+    int pad_count;
+    GndPad *pads;
+} EagleBoardProject;
+
 typedef struct {
     int row_count;
     int column_count;
@@ -108,6 +146,7 @@ typedef struct {
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
     char status_message[256];
+    EagleBoardProject *eagle_board;
 } AppState;
 
 typedef struct {

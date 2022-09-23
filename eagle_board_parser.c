@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include "eagle_board_parser.h"
 #include "utils.h"
@@ -13,44 +12,6 @@
 #include "file_utils.h"
 
 #define MIL_TO_MM_FACTOR 0.0254
-
-typedef enum {
-    SHAPE_UNKNOWN = 0,
-    SHAPE_ROUND,
-    SHAPE_OCTAGON,
-    SHAPE_SQUARE,
-    SHAPE_LONG
-} PadShape;
-
-typedef struct {
-    char *name;
-    double x;
-    double y;
-    double rotation;
-    double drill_size;
-    double diameter;
-    PadShape shape;
-} PackagePad;
-
-typedef struct {
-    char *name;
-    char *library;
-    char *package;
-    PackagePad pad;
-    double x;
-    double y;
-    double rotation;
-} GndElement;
-
-typedef struct {
-    struct {
-        double pad_hole_to_mask_ratio;
-        double pad_min_mask_diameter;
-        double pad_max_mask_diameter;
-    } design_rules;
-    int element_count;
-    GndElement *elements;
-} EagleBoardProject;
 
 void strip_extra_chars(char *text) {
     while (strlen(text) > 0 && (text[strlen(text) - 1] == '\"' || text[strlen(text) - 1] == '>')) {
@@ -67,7 +28,7 @@ int open_file(AppState *state, const char *file_name, FILE **file) {
     return RESULT_OK;
 }
 
-int read_file_designrules(AppState *state, FILE *file, EagleBoardProject *project) {
+int read_file_designrules(FILE *file, EagleBoardProject *project) {
     char *line = NULL;
     int result;
     while ((result = file_read_line(file, &line)) == RESULT_OK) {
@@ -99,8 +60,8 @@ int read_file_designrules(AppState *state, FILE *file, EagleBoardProject *projec
 }
 
 int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project) {
-    project->element_count = 0;
-    project->elements = NULL;
+    project->pad_count = 0;
+    project->pads = NULL;
 
     char *line = NULL;
     int result;
@@ -108,22 +69,22 @@ int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project
         if (starts_with(line, "</signal>")) break;
         if (!starts_with(line, "<contactref ")) break;
 
-        project->element_count++;
-        project->elements = realloc(project->elements, sizeof(GndElement) * project->element_count);
-        GndElement *element = &(project->elements[project->element_count - 1]);
+        project->pad_count++;
+        project->pads = realloc(project->pads, sizeof(GndPad) * project->pad_count);
+        GndPad *pad = &(project->pads[project->pad_count - 1]);
 
         strtok(line, "\"");
-        element->name = strtok(NULL, "\"");
+        pad->name = strtok(NULL, "\"");
         strtok(NULL, "\"");
-        element->pad.name = strtok(NULL, "\"");
-        element->library = NULL;
-        element->package = NULL;
-        element->x = 0;
-        element->y = 0;
-        element->rotation = 0;
+        pad->package_pad.name = strtok(NULL, "\"");
+        pad->library = NULL;
+        pad->package = NULL;
+        pad->x = 0;
+        pad->y = 0;
+        pad->rotation = 0;
 
-        if (element->name == NULL || element->pad.name == NULL) {
-            strcpy(state->status_message, "Failed to get GND element specifics");
+        if (pad->name == NULL || pad->package_pad.name == NULL) {
+            strcpy(state->status_message, "Failed to get GND pad specifics");
             result = RESULT_FAILED;
             break;
         }
@@ -133,8 +94,8 @@ int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project
     return result;
 }
 
-int read_file_elements(AppState *state, FILE *file, EagleBoardProject *project) {
-    if (project->element_count == 0) return RESULT_OK;
+int read_file_elements(FILE *file, EagleBoardProject *project) {
+    if (project->pad_count == 0) return RESULT_OK;
 
     char *line = NULL;
     int result;
@@ -165,18 +126,18 @@ int read_file_elements(AppState *state, FILE *file, EagleBoardProject *project) 
         double rotation = strtod(rotation_text, NULL);
 
 
-        for (int i = 0; i < project->element_count; i++) {
-            GndElement *element = &(project->elements[i]);
-            if (strcmp(name, element->name) != 0) continue;
+        for (int i = 0; i < project->pad_count; i++) {
+            GndPad *pad = &(project->pads[i]);
+            if (strcmp(name, pad->name) != 0) continue;
 
-            element->library = malloc(strlen(library) + 1);
-            strcpy(element->library, library);
-            element->package = malloc(strlen(package) + 1);
-            strcpy(element->package, package);
+            pad->library = malloc(strlen(library) + 1);
+            strcpy(pad->library, library);
+            pad->package = malloc(strlen(package) + 1);
+            strcpy(pad->package, package);
 
-            element->x = x;
-            element->y = y;
-            element->rotation = rotation;
+            pad->x = x;
+            pad->y = y;
+            pad->rotation = rotation;
         }
     }
 
@@ -184,8 +145,8 @@ int read_file_elements(AppState *state, FILE *file, EagleBoardProject *project) 
     return result;
 }
 
-int read_file_libraries(AppState *state, FILE *file, EagleBoardProject *project) {
-    if (project->element_count == 0) return RESULT_OK;
+int read_file_libraries(FILE *file, EagleBoardProject *project) {
+    if (project->pad_count == 0) return RESULT_OK;
 
     bool description_started = false;
     char library_name[64];
@@ -236,7 +197,7 @@ int read_file_libraries(AppState *state, FILE *file, EagleBoardProject *project)
 
         if (package_name[0] == '\0') continue;
 
-        if (!starts_with(line, "<gnd_pad ")) continue;
+        if (!starts_with(line, "<pad ")) continue;
 
         char pad_name[64], x_text[64], y_text[64], rotation_text[64], drill_text[64], diameter_text[64], shape_text[64];
         char *part = strtok(line, " ");
@@ -270,19 +231,19 @@ int read_file_libraries(AppState *state, FILE *file, EagleBoardProject *project)
         else if (starts_with(shape_text, "long")) shape = SHAPE_LONG;
         else if (starts_with(shape_text, "octagon")) shape = SHAPE_OCTAGON;
 
-        for (int i = 0; i < project->element_count; i++) {
-            GndElement *element = &(project->elements[i]);
-            if (strcmp(library_name, element->library) != 0
-                || strcmp(package_name, element->package) != 0
-                || strcmp(pad_name, element->pad.name) != 0)
+        for (int i = 0; i < project->pad_count; i++) {
+            GndPad *pad = &(project->pads[i]);
+            if ((pad->library != NULL && strcmp(library_name, pad->library) != 0)
+                || (pad->package != NULL && strcmp(package_name, pad->package) != 0)
+                || strcmp(pad_name, pad->package_pad.name) != 0)
                 continue;
 
-            element->pad.x = x;
-            element->pad.y = y;
-            element->pad.rotation = rotation;
-            element->pad.drill_size = drill;
-            element->pad.diameter = diameter;
-            element->pad.shape = shape;
+            pad->package_pad.x = x;
+            pad->package_pad.y = y;
+            pad->package_pad.rotation = rotation;
+            pad->package_pad.drill_size = drill;
+            pad->package_pad.diameter = diameter;
+            pad->package_pad.shape = shape;
         }
     }
 
@@ -295,7 +256,7 @@ int read_file(AppState *state, FILE *file, EagleBoardProject *project) {
     int result;
     while (file_read_line(file, &line) == RESULT_OK) {
         if (starts_with(line, "<designrules")) {
-            result = read_file_designrules(state, file, project);
+            result = read_file_designrules(file, project);
             if (result != RESULT_OK) break;
         } else if (starts_with(line, "<signal name=\"GND\"")) {
             result = read_file_gnd_signal(state, file, project);
@@ -303,21 +264,25 @@ int read_file(AppState *state, FILE *file, EagleBoardProject *project) {
         }
     }
 
-    // Reread file from beginning
-    fseek(file, 0, SEEK_SET);
-    while (file_read_line(file, &line) == RESULT_OK) {
-        if (starts_with(line, "<elements")) {
-            result = read_file_elements(state, file, project);
-            if (result != RESULT_OK) break;
+    if (result == RESULT_OK) {
+        // Reread file from beginning
+        fseek(file, 0, SEEK_SET);
+        while (file_read_line(file, &line) == RESULT_OK) {
+            if (starts_with(line, "<elements")) {
+                result = read_file_elements(file, project);
+                if (result != RESULT_OK) break;
+            }
         }
     }
 
-    // Reread file from beginning
-    fseek(file, 0, SEEK_SET);
-    while (file_read_line(file, &line) == RESULT_OK) {
-        if (starts_with(line, "<libraries")) {
-            result = read_file_libraries(state, file, project);
-            if (result != RESULT_OK) break;
+    if (result == RESULT_OK) {
+        // Reread file from beginning
+        fseek(file, 0, SEEK_SET);
+        while (file_read_line(file, &line) == RESULT_OK) {
+            if (starts_with(line, "<libraries")) {
+                result = read_file_libraries(file, project);
+                if (result != RESULT_OK) break;
+            }
         }
     }
     if (line) free(line);
@@ -334,26 +299,30 @@ int validate_project(AppState *state, EagleBoardProject *project) {
         strcpy(state->status_message, "Failed to load design rules");
         return RESULT_FAILED;
     }
-    for (int i = 0; i < project->element_count; i++) {
-        GndElement *element = &(project->elements[i]);
-        if (element->library == NULL || strlen(element->library) == 0 || element->package == NULL || strlen(element->package) == 0) {
-            strcpy(state->status_message, "Failed to get GND element libary/package parameters");
-            sprintf(buffer, "Failed to get GND element %s libary/package parameters", element->name);
+    for (int i = 0; i < project->pad_count; i++) {
+        GndPad *pad = &(project->pads[i]);
+
+        if (pad->name == NULL || pad->package_pad.name == NULL) {
+            strcpy(state->status_message, "Failed to get GND pad specifics");
+            return RESULT_FAILED;
+        }
+        if (pad->library == NULL || strlen(pad->library) == 0 || pad->package == NULL || strlen(pad->package) == 0) {
+            sprintf(buffer, "Failed to get GND pad %s library/package parameters", pad->name);
             strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
-        if (element->x == 0 && element->y == 0) {
-            sprintf(buffer, "GND element %s X and Y are 0", element->name);
+        if (pad->x == 0 && pad->y == 0) {
+            sprintf(buffer, "GND pad %s X and Y are 0", pad->name);
             strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
-        if (element->pad.shape == SHAPE_UNKNOWN) {
-            sprintf(buffer, "GND element %s missing a shape", element->name);
+        if (pad->package_pad.shape == SHAPE_UNKNOWN) {
+            sprintf(buffer, "GND pad %s missing a shape", pad->name);
             strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
-        if (element->pad.drill_size == 0) {
-            sprintf(buffer, "GND element %s missing a drill size", element->name);
+        if (pad->package_pad.drill_size == 0) {
+            sprintf(buffer, "GND pad %s missing a drill size", pad->name);
             strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
@@ -367,20 +336,20 @@ void print_project(EagleBoardProject *project) {
            "\tpad_hole_to_mask_ratio:\t%lf %%\n"
            "\tpad_min_mask_diameter:\t%lf mm\n"
            "\tpad_max_mask_diameter:\t%lf mm\n"
-           "elements:\n",
+           "GND pads:\n",
            project->design_rules.pad_hole_to_mask_ratio,
            project->design_rules.pad_min_mask_diameter,
            project->design_rules.pad_max_mask_diameter
     );
-    for (int i = 0; i < project->element_count; i++) {
+    for (int i = 0; i < project->pad_count; i++) {
         printf("\tname: '%s'; gnd_pad: '%s'; library: '%s'; package: '%s'; x: %lf; y: %lf; rotation: %.0lf\n",
-               project->elements[i].name,
-               project->elements[i].pad.name,
-               project->elements[i].library,
-               project->elements[i].package,
-               project->elements[i].x,
-               project->elements[i].y,
-               project->elements[i].rotation
+               project->pads[i].name,
+               project->pads[i].package_pad.name,
+               project->pads[i].library,
+               project->pads[i].package,
+               project->pads[i].x,
+               project->pads[i].y,
+               project->pads[i].rotation
         );
     }
 }
@@ -390,21 +359,20 @@ int eagle_board_parse(AppState *state, const char *file_name) {
     int result = open_file(state, file_name, &file);
     if (result != RESULT_OK) return result;
 
-    EagleBoardProject project = {
-            .design_rules.pad_hole_to_mask_ratio = -1,
-            .design_rules.pad_min_mask_diameter = -1,
-            .design_rules.pad_max_mask_diameter = -1,
-    };
+    state->eagle_board = malloc(sizeof(EagleBoardProject));
 
-    result = read_file(state, file, &project);
+    state->eagle_board->design_rules.pad_hole_to_mask_ratio = -1;
+    state->eagle_board->design_rules.pad_min_mask_diameter = -1;
+    state->eagle_board->design_rules.pad_max_mask_diameter = -1;
+
+    result = read_file(state, file, state->eagle_board);
     fclose(file);
 
-    print_project(&project);
-
     if (result != RESULT_OK) return result;
 
-    result = validate_project(state, &project);
+    result = validate_project(state, state->eagle_board);
     if (result != RESULT_OK) return result;
 
+//    print_project(state->eagle_board);
     return RESULT_OK;
 }

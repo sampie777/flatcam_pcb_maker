@@ -270,10 +270,7 @@ int main() {
             .flatcam_options.silkscreen_mirror = 'N',
     };
     state.status_message[0] = '\0';
-
-    int result = eagle_board_parse(&state, "./.files/carcomputer.xml");
-    printf("Result: %d\nStatus message: %s\n", result, state.status_message);
-    return 0;
+    state.eagle_board = NULL;
 
     char projects_path[64];
 #ifndef PROJECTS_PATH

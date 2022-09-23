@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "return_codes.h"
 #include "file_utils.h"
+#include "gnd_pads.h"
 
 #define TEMP_FILE_NAME "tempfile"
 
@@ -256,6 +257,7 @@ int modify_trace_file(AppState *state) {
 
     bool use_mesh_present = false;
     bool end_print_beep_present = false;
+    bool has_been_checked_for_gnd_pad = false;
 
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
@@ -274,6 +276,11 @@ int modify_trace_file(AppState *state) {
             use_mesh_present = true;
         } else if (strcmp(line, G_BEEP_END) == 0) {
             end_print_beep_present = true;
+        } else if (starts_with(line, "G01 X")) {
+            if (!has_been_checked_for_gnd_pad)
+                has_been_checked_for_gnd_pad = !remove_gnd_pads(state, file, &line);
+        } else {
+            has_been_checked_for_gnd_pad = false;
         }
 
         fprintf(temp_file, "%s\n", line);
