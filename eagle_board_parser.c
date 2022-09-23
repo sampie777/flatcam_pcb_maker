@@ -14,11 +14,29 @@
 
 #define MIL_TO_MM_FACTOR 0.0254
 
+typedef enum {
+    SHAPE_UNKNOWN = 0,
+    SHAPE_ROUND,
+    SHAPE_OCTAGON,
+    SHAPE_SQUARE,
+    SHAPE_LONG
+} PadShape;
+
+typedef struct {
+    char *name;
+    double x;
+    double y;
+    double rotation;
+    double drill_size;
+    double diameter;
+    PadShape shape;
+} PackagePad;
+
 typedef struct {
     char *name;
     char *library;
     char *package;
-    char *gnd_pad;
+    PackagePad pad;
     double x;
     double y;
     double rotation;
@@ -33,6 +51,12 @@ typedef struct {
     int element_count;
     GndElement *elements;
 } EagleBoardProject;
+
+void strip_extra_chars(char *text) {
+    while (strlen(text) > 0 && (text[strlen(text) - 1] == '\"' || text[strlen(text) - 1] == '>')) {
+        text[strlen(text) - 1] = '\0';
+    }
+}
 
 int open_file(AppState *state, const char *file_name, FILE **file) {
     *file = fopen(file_name, "r");
@@ -91,14 +115,14 @@ int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project
         strtok(line, "\"");
         element->name = strtok(NULL, "\"");
         strtok(NULL, "\"");
-        element->gnd_pad = strtok(NULL, "\"");
+        element->pad.name = strtok(NULL, "\"");
         element->library = NULL;
         element->package = NULL;
         element->x = 0;
         element->y = 0;
         element->rotation = 0;
 
-        if (element->name == NULL || element->gnd_pad == NULL) {
+        if (element->name == NULL || element->pad.name == NULL) {
             strcpy(state->status_message, "Failed to get GND element specifics");
             result = RESULT_FAILED;
             break;
@@ -107,43 +131,6 @@ int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project
 
     if (line) free(line);
     return result;
-}
-
-void get_gnd_element_for_name(const EagleBoardProject *project, GndElement **element, const char *name, int offset) {
-    int matches = 0;
-    for (int i = 0; i < project->element_count; i++) {
-        if (strcmp(project->elements[i].name, name) == 0) {
-            *element = &(project->elements[i]);
-            matches++;
-
-            if (matches > offset)
-                break;
-        }
-    }
-}
-
-void merge_elements_by_library_data(AppState *state, EagleBoardProject *project) {
-    for (int i = 0; i < project->element_count; i++) {
-        GndElement *element = &(project->elements[i]);
-        if (element->library != NULL) continue;
-
-        GndElement *base_element = element;
-        int offset = 0;
-        while (base_element != NULL && base_element->library == NULL) {
-            get_gnd_element_for_name(project, &base_element, element->name, offset++);
-        }
-        if (base_element == NULL) {
-            printf("Could not find base element for %s\n", element->name);
-            continue;
-        }
-
-        // Link library and package
-        element->library = base_element->library;
-        element->package = base_element->package;
-        element->x = base_element->x;
-        element->y = base_element->y;
-        element->rotation = base_element->rotation;
-    }
 }
 
 int read_file_elements(AppState *state, FILE *file, EagleBoardProject *project) {
@@ -162,31 +149,141 @@ int read_file_elements(AppState *state, FILE *file, EagleBoardProject *project) 
             sscanf(part, "package=\"%s\"", package);
             sscanf(part, "x=\"%s\"", x_text);
             sscanf(part, "y=\"%s\"", y_text);
-            sscanf(part, "rot=\"%s\"", rotation_text);
+            sscanf(part, "rot=\"R%s\"", rotation_text);
+            sscanf(part, "rot=\"MR%s\"", rotation_text);
         }
 
-        if (strlen(name) > 0) name[strlen(name) - 1] = '\0';
-        if (strlen(library) > 0) library[strlen(library) - 1] = '\0';
-        if (strlen(package) > 0) package[strlen(package) - 1] = '\0';
-        if (strlen(x_text) > 0) x_text[strlen(x_text) - 1] = '\0';
-        if (strlen(y_text) > 0) y_text[strlen(y_text) - 1] = '\0';
-        if (strlen(rotation_text) > 0) rotation_text[strlen(rotation_text) - 1] = '\0';
+        strip_extra_chars(name);
+        strip_extra_chars(library);
+        strip_extra_chars(package);
+        strip_extra_chars(x_text);
+        strip_extra_chars(y_text);
+        strip_extra_chars(rotation_text);
+
         double x = strtod(x_text, NULL);
         double y = strtod(y_text, NULL);
         double rotation = strtod(rotation_text, NULL);
 
-        GndElement *element = NULL;
-        get_gnd_element_for_name(project, &element, name, 0);
-        if (element == NULL) continue;  // Not a GND element
 
-        element->library = malloc(strlen(library) + 1);
-        strcpy(element->library, library);
-        element->package = malloc(strlen(package) + 1);
-        strcpy(element->package, package);
+        for (int i = 0; i < project->element_count; i++) {
+            GndElement *element = &(project->elements[i]);
+            if (strcmp(name, element->name) != 0) continue;
 
-        element->x = x;
-        element->y = y;
-        element->rotation = rotation;
+            element->library = malloc(strlen(library) + 1);
+            strcpy(element->library, library);
+            element->package = malloc(strlen(package) + 1);
+            strcpy(element->package, package);
+
+            element->x = x;
+            element->y = y;
+            element->rotation = rotation;
+        }
+    }
+
+    if (line) free(line);
+    return result;
+}
+
+int read_file_libraries(AppState *state, FILE *file, EagleBoardProject *project) {
+    if (project->element_count == 0) return RESULT_OK;
+
+    bool description_started = false;
+    char library_name[64];
+    char package_name[64];
+
+    char *line = NULL;
+    int result;
+    while ((result = file_read_line(file, &line)) == RESULT_OK) {
+        if (starts_with(line, "</libraries>")) break;
+        if (starts_with(line, "<packages3d")) continue;
+        if (starts_with(line, "<package3d")) continue;
+        if (starts_with(line, "<packages")) continue;
+        if (starts_with(line, "</packages>")) continue;
+        if (starts_with(line, "<description")) description_started = true;
+        if (strstr(line, "</description>") != NULL) {
+            description_started = false;
+            continue;
+        }
+        if (description_started) continue;
+        if (starts_with(line, "</library>")) {
+            library_name[0] = '\0';
+            continue;
+        }
+
+        if (starts_with(line, "<library ")) {
+            if (sscanf(line, "<library name=\"%s\"", library_name) != 1) {
+                library_name[0] = '\0';
+                printf("No name found for library: %s\n", line);
+            }
+            strip_extra_chars(library_name);
+            continue;
+        }
+
+        if (library_name[0] == '\0') continue;
+
+        if (starts_with(line, "<package ")) {
+            if (sscanf(line, "<package name=\"%s\"", package_name) != 1) {
+                package_name[0] = '\0';
+                printf("No name found for package: %s\n", line);
+            }
+            while (strlen(package_name) > 0
+                   && (package_name[strlen(package_name) - 1] == '\"'
+                       || package_name[strlen(package_name) - 1] == '>')) {
+                package_name[strlen(package_name) - 1] = '\0';
+            }
+            continue;
+        }
+
+        if (package_name[0] == '\0') continue;
+
+        if (!starts_with(line, "<gnd_pad ")) continue;
+
+        char pad_name[64], x_text[64], y_text[64], rotation_text[64], drill_text[64], diameter_text[64], shape_text[64];
+        char *part = strtok(line, " ");
+        while ((part = strtok(NULL, " ")) != NULL) {
+            sscanf(part, "name=\"%s\"", pad_name);
+            sscanf(part, "x=\"%s\"", x_text);
+            sscanf(part, "y=\"%s\"", y_text);
+            sscanf(part, "rot=\"R%s\"", rotation_text);
+            sscanf(part, "rot=\"MR%s\"", rotation_text);
+            sscanf(part, "drill=\"%s\"", drill_text);
+            sscanf(part, "diameter=\"%s\"", diameter_text);
+            sscanf(part, "shape=\"%s\"", shape_text);
+        }
+
+        strip_extra_chars(pad_name);
+        strip_extra_chars(x_text);
+        strip_extra_chars(y_text);
+        strip_extra_chars(rotation_text);
+        strip_extra_chars(drill_text);
+        strip_extra_chars(diameter_text);
+        strip_extra_chars(shape_text);
+
+        double x = strtod(x_text, NULL);
+        double y = strtod(y_text, NULL);
+        double rotation = strtod(rotation_text, NULL);
+        double drill = strtod(drill_text, NULL);
+        double diameter = strtod(diameter_text, NULL);
+
+        PadShape shape = SHAPE_ROUND;
+        if (starts_with(shape_text, "square")) shape = SHAPE_SQUARE;
+        else if (starts_with(shape_text, "long")) shape = SHAPE_LONG;
+        else if (starts_with(shape_text, "octagon")) shape = SHAPE_OCTAGON;
+
+        for (int i = 0; i < project->element_count; i++) {
+            GndElement *element = &(project->elements[i]);
+            if (strcmp(library_name, element->library) != 0
+                || strcmp(package_name, element->package) != 0
+                || strcmp(pad_name, element->pad.name) != 0)
+                continue;
+
+            element->pad.x = x;
+            element->pad.y = y;
+            element->pad.rotation = rotation;
+            element->pad.drill_size = drill;
+            element->pad.diameter = diameter;
+            element->pad.shape = shape;
+        }
     }
 
     if (line) free(line);
@@ -214,15 +311,23 @@ int read_file(AppState *state, FILE *file, EagleBoardProject *project) {
             if (result != RESULT_OK) break;
         }
     }
-    if (line) free(line);
 
-    merge_elements_by_library_data(state, project);
+    // Reread file from beginning
+    fseek(file, 0, SEEK_SET);
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, "<libraries")) {
+            result = read_file_libraries(state, file, project);
+            if (result != RESULT_OK) break;
+        }
+    }
+    if (line) free(line);
 
     if (result == RESULT_EMPTY) return RESULT_OK;
     return result;
 }
 
 int validate_project(AppState *state, EagleBoardProject *project) {
+    char buffer[256];
     if (project->design_rules.pad_hole_to_mask_ratio < 0 ||
         project->design_rules.pad_min_mask_diameter < 0 ||
         project->design_rules.pad_max_mask_diameter < 0) {
@@ -233,10 +338,23 @@ int validate_project(AppState *state, EagleBoardProject *project) {
         GndElement *element = &(project->elements[i]);
         if (element->library == NULL || strlen(element->library) == 0 || element->package == NULL || strlen(element->package) == 0) {
             strcpy(state->status_message, "Failed to get GND element libary/package parameters");
+            sprintf(buffer, "Failed to get GND element %s libary/package parameters", element->name);
+            strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
         if (element->x == 0 && element->y == 0) {
-            strcpy(state->status_message, "GND element X and Y are 0");
+            sprintf(buffer, "GND element %s X and Y are 0", element->name);
+            strcpy(state->status_message, buffer);
+            return RESULT_FAILED;
+        }
+        if (element->pad.shape == SHAPE_UNKNOWN) {
+            sprintf(buffer, "GND element %s missing a shape", element->name);
+            strcpy(state->status_message, buffer);
+            return RESULT_FAILED;
+        }
+        if (element->pad.drill_size == 0) {
+            sprintf(buffer, "GND element %s missing a drill size", element->name);
+            strcpy(state->status_message, buffer);
             return RESULT_FAILED;
         }
     }
@@ -257,7 +375,7 @@ void print_project(EagleBoardProject *project) {
     for (int i = 0; i < project->element_count; i++) {
         printf("\tname: '%s'; gnd_pad: '%s'; library: '%s'; package: '%s'; x: %lf; y: %lf; rotation: %.0lf\n",
                project->elements[i].name,
-               project->elements[i].gnd_pad,
+               project->elements[i].pad.name,
                project->elements[i].library,
                project->elements[i].package,
                project->elements[i].x,
