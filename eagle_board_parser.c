@@ -53,6 +53,8 @@ int read_file_designrules(FILE *file, EagleBoardProject *project) {
             if (strstr(value, "mil\"") != NULL) {
                 project->design_rules.pad_max_mask_diameter *= MIL_TO_MM_FACTOR;
             }
+        } else if (strstr(line, "\"psElongationLong\"") != NULL) {
+            project->design_rules.pad_shape_long_ratio = strtod(value, NULL) / 100.0;
         }
     }
 
@@ -368,6 +370,7 @@ int eagle_board_parse(AppState *state, const char *file_name) {
     state->eagle_board->design_rules.pad_hole_to_mask_ratio = -1;
     state->eagle_board->design_rules.pad_min_mask_diameter = -1;
     state->eagle_board->design_rules.pad_max_mask_diameter = -1;
+    state->eagle_board->design_rules.pad_shape_long_ratio = 0;
 
     result = read_file(state, file, state->eagle_board);
     fclose(file);
@@ -377,6 +380,6 @@ int eagle_board_parse(AppState *state, const char *file_name) {
     result = validate_project(state, state->eagle_board);
     if (result != RESULT_OK) return result;
 
-//    print_project(state->eagle_board);
+    print_project(state->eagle_board);
     return RESULT_OK;
 }

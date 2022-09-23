@@ -125,6 +125,7 @@ typedef struct {
         double pad_hole_to_mask_ratio;
         double pad_min_mask_diameter;
         double pad_max_mask_diameter;
+        double pad_shape_long_ratio;
     } design_rules;
     int pad_count;
     GndPad *pads;

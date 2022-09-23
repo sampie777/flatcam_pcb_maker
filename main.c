@@ -282,6 +282,13 @@ int main() {
     state.projects_path = malloc(strlen(projects_path) + 1);
     strcpy(state.projects_path, projects_path);
 
+    state.project = "leddriver";
+
+    int result = eagle_board_parse(&state, "./.files/carcomputer.xml");
+    printf("Result: %d\nStatus message: %s\n", result, state.status_message);
+
+    modify_trace_file(&state);
+    return 0;
     enableRawMode();
 
     if (getWindowSize(&state.row_count, &state.column_count) == -1)

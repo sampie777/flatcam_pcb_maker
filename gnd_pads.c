@@ -38,6 +38,10 @@ double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
                           : pad->package_pad.drill_size * project->design_rules.pad_hole_to_mask_ratio;
     // todo: use pad shape to improve diameter accuracy
 
+    if (pad->package_pad.shape == SHAPE_LONG) {
+        pad_diameter *= 1 + project->design_rules.pad_shape_long_ratio;
+    }
+
     return min(project->design_rules.pad_max_mask_diameter,
                max(project->design_rules.pad_min_mask_diameter, pad_diameter)) / 2;
 }
