@@ -5,6 +5,7 @@
 #ifndef FLATCAM_PCB_MAKER_COMMON_H
 #define FLATCAM_PCB_MAKER_COMMON_H
 
+#include <stdbool.h>
 #include "local_settings.h"
 
 #define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
@@ -116,6 +117,7 @@ typedef struct {
     double x;
     double y;
     double rotation;
+    bool inverted;
 } GndPad;
 
 typedef struct {

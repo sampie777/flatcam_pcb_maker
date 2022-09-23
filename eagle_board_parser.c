@@ -12,6 +12,7 @@
 #include "file_utils.h"
 
 #define MIL_TO_MM_FACTOR 0.0254
+#define SIGNAL_NAME "GND"
 
 void strip_extra_chars(char *text) {
     while (strlen(text) > 0 && (text[strlen(text) - 1] == '\"' || text[strlen(text) - 1] == '>')) {
@@ -103,6 +104,8 @@ int read_file_elements(FILE *file, EagleBoardProject *project) {
         if (starts_with(line, "</elements>")) break;
 
         char name[64] = "", library[64] = "", package[64] = "", x_text[64] = "", y_text[64] = "", rotation_text[64] = "";
+        bool inverted = strstr(line, "rot=\"MR") != NULL;
+
         char *part = strtok(line, " ");
         while ((part = strtok(NULL, " ")) != NULL) {
             sscanf(part, "name=\"%s\"", name);
@@ -125,7 +128,6 @@ int read_file_elements(FILE *file, EagleBoardProject *project) {
         double y = strtod(y_text, NULL);
         double rotation = strtod(rotation_text, NULL);
 
-
         for (int i = 0; i < project->pad_count; i++) {
             GndPad *pad = &(project->pads[i]);
             if (strcmp(name, pad->name) != 0) continue;
@@ -138,6 +140,7 @@ int read_file_elements(FILE *file, EagleBoardProject *project) {
             pad->x = x;
             pad->y = y;
             pad->rotation = rotation;
+            pad->inverted = inverted;
         }
     }
 
@@ -258,7 +261,7 @@ int read_file(AppState *state, FILE *file, EagleBoardProject *project) {
         if (starts_with(line, "<designrules")) {
             result = read_file_designrules(file, project);
             if (result != RESULT_OK) break;
-        } else if (starts_with(line, "<signal name=\"GND\"")) {
+        } else if (starts_with(line, "<signal name=\""SIGNAL_NAME"\"")) {
             result = read_file_gnd_signal(state, file, project);
             if (result != RESULT_OK) break;
         }
@@ -342,14 +345,15 @@ void print_project(EagleBoardProject *project) {
            project->design_rules.pad_max_mask_diameter
     );
     for (int i = 0; i < project->pad_count; i++) {
-        printf("\tname: '%s'; gnd_pad: '%s'; library: '%s'; package: '%s'; x: %lf; y: %lf; rotation: %.0lf\n",
+        printf("\tname: '%s'; gnd_pad: '%s'; library: '%s'; package: '%s'; x: %lf; y: %lf; rotation: %.0lf%s\n",
                project->pads[i].name,
                project->pads[i].package_pad.name,
                project->pads[i].library,
                project->pads[i].package,
                project->pads[i].x,
                project->pads[i].y,
-               project->pads[i].rotation
+               project->pads[i].rotation,
+               project->pads[i].inverted ? "; inverted" : ""
         );
     }
 }
