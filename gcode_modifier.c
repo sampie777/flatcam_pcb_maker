@@ -14,6 +14,7 @@
 
 #define TEMP_FILE_NAME "tempfile"
 
+#define SETTINGS_COMMENT_START "; [FPB]"
 #define G_USE_MESH "M420 S1 ; Use mesh"
 #define G_BEEP "M300 S500 P500 ; Beep"
 #define G_BEEP_END "M300 S2000 P500 ; Beep end"
@@ -23,6 +24,40 @@
 #define G_PAUSE "G4 S20"
 #define G_HOME_AXIS "G28"
 #define G_LCD_MESSAGE "M117"
+
+void generate_settings_comment(AppState *state, char **out) {
+    *out = malloc(1024);
+    sprintf(*out,
+            SETTINGS_COMMENT_START" file=%s\n"
+            SETTINGS_COMMENT_START" width=%lf\n"
+            SETTINGS_COMMENT_START" height=%lf\n"
+            SETTINGS_COMMENT_START" traces=%c\n"
+            SETTINGS_COMMENT_START" mirror=%c\n"
+            SETTINGS_COMMENT_START" offset_x=%lf\n"
+            SETTINGS_COMMENT_START" offset_y=%lf\n"
+            SETTINGS_COMMENT_START" dia_width=%s\n"
+            SETTINGS_COMMENT_START" feedrate_etch=%s\n"
+            SETTINGS_COMMENT_START" iterations=%s\n"
+            SETTINGS_COMMENT_START" remove_gnd_pads=%c\n"
+            SETTINGS_COMMENT_START" silkscreen_top=%c\n"
+            SETTINGS_COMMENT_START" silkscreen_bottom=%c\n"
+            SETTINGS_COMMENT_START" silkscreen_mirror=%c\n",
+            state->eagle_board == NULL ? "(null)" : state->eagle_board->name,
+            state->eagle_board == NULL ? 0 : state->eagle_board->width,
+            state->eagle_board == NULL ? 0 : state->eagle_board->height,
+            state->flatcam_options.traces,
+            state->flatcam_options.mirror,
+            state->flatcam_options.offset_x,
+            state->flatcam_options.offset_y,
+            state->flatcam_options.dia_width,
+            state->flatcam_options.feedrate_etch,
+            state->flatcam_options.iterations,
+            state->flatcam_options.remove_gnd_pads,
+            state->flatcam_options.silkscreen_top,
+            state->flatcam_options.silkscreen_bottom,
+            state->flatcam_options.silkscreen_mirror
+    );
+}
 
 int replace_file_with_tempfile(AppState *state, const char *filename) {
     char buffer[256];
@@ -125,6 +160,7 @@ int modify_drill_file(AppState *state) {
     result = open_files(state, DRILLS_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
+    bool settings_comment_present = false;
     bool pause_print_present = false;
     bool use_mesh_present = false;
     bool end_print_beep_present = false;
@@ -132,6 +168,14 @@ int modify_drill_file(AppState *state) {
     bool removed_a_hole = false;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
         if (starts_with(line, "F")) {
             fprintf(temp_file, "G0 %s\n", line);
             continue;
@@ -204,11 +248,20 @@ int modify_check_holes_file(AppState *state) {
     result = open_files(state, DRILLS_CHECK_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
+    bool settings_comment_present = false;
     bool use_mesh_present = false;
 
     bool removed_a_hole = false;
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
         if (starts_with(line, "F")) {
             fprintf(temp_file, "G0 %s\n", line);
             continue;
@@ -255,12 +308,21 @@ int modify_trace_file(AppState *state) {
     int result = open_files(state, TRACES_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
+    bool settings_comment_present = false;
     bool use_mesh_present = false;
     bool end_print_beep_present = false;
     bool has_been_checked_for_gnd_pad = false;
 
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
         if (starts_with(line, "F")) {
             fprintf(temp_file, "G0 %s\n", line);
             continue;
@@ -306,11 +368,20 @@ int modify_silkscreen_file(AppState *state) {
     result = open_files(state, SILKSCREEN_OUTPUT_FILE, &file, &temp_file);
     if (result != RESULT_OK) return result;
 
+    bool settings_comment_present = false;
     bool use_mesh_present = false;
     bool end_print_beep_present = false;
 
     char *line = NULL;
     while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
         if (starts_with(line, "F")) {
             fprintf(temp_file, "G0 %s\n", line);
             continue;
