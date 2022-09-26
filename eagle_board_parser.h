@@ -7,6 +7,8 @@
 
 #include "common.h"
 
-int eagle_board_parse(AppState *state, const char *file_name);
+int eagle_job_parse(AppState *state);
+
+int eagle_board_parse(AppState *state);
 
 #endif //FLATCAM_PCB_MAKER_EAGLE_BOARD_PARSER_H

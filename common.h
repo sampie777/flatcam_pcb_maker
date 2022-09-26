@@ -51,6 +51,7 @@ enum FlatcamOptions {
     FLATCAM_DIA_WIDTH,
     FLATCAM_FEEDRATE,
     FLATCAM_ITERATIONS,
+    FLATCAM_REMOVE_GND_PADS,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
@@ -73,6 +74,7 @@ typedef struct {
     char dia_width[10];
     char feedrate_etch[8];
     char iterations[8];
+    char remove_gnd_pads;
     char silkscreen_top;
     char silkscreen_bottom;
     char silkscreen_mirror;
@@ -121,6 +123,9 @@ typedef struct {
 } GndPad;
 
 typedef struct {
+    char name[128];
+    double width;
+    double height;
     struct {
         double pad_hole_to_mask_ratio;
         double pad_min_mask_diameter;

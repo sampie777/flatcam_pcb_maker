@@ -17,6 +17,7 @@
 #include "gcode_modifier.h"
 #include "checklist.h"
 #include "eagle_board_parser.h"
+#include "return_codes.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -78,6 +79,16 @@ void flatcam_screen_dialog_callback(AppState *state) {
     selection_increase(state, 1);
 }
 
+void on_project_selected(AppState *state) {
+    size_t size = strlen(state->projects[state->project_selection]);
+    state->project = malloc(size + 1);
+    strcpy(state->project, state->projects[state->project_selection]);
+
+    state->eagle_board = NULL;
+    if (eagle_job_parse(state) != RESULT_OK) return;
+    if (eagle_board_parse(state) != RESULT_OK) return;
+}
+
 void confirm_selection(AppState *state) {
     if (state->dialog.show) {
         dialog_confirm(state);
@@ -91,11 +102,9 @@ void confirm_selection(AppState *state) {
                 clearScreen();
                 exit(0);
             }
-            size_t size = strlen(state->projects[state->project_selection]) * sizeof(char);
-            state->project = malloc(size + 1);
-            strcpy(state->project, state->projects[state->project_selection]);
             state->screen = SCREEN_SELECT_ACTION;
             state->action_selection = 0;
+            on_project_selected(state);
             break;
         }
         case SCREEN_SELECT_ACTION: {
@@ -148,6 +157,9 @@ void confirm_selection(AppState *state) {
                     break;
                 case FLATCAM_ITERATIONS:
                     dialog_show_string_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations[0]), 7, flatcam_screen_dialog_callback);
+                    break;
+                case FLATCAM_REMOVE_GND_PADS:
+                    dialog_options_show_char_with_callback(state, "Remove GND pads", state->flatcam_options.remove_gnd_pads, &(state->flatcam_options.remove_gnd_pads), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
                     dialog_options_show_char_with_callback(state, "Silkscreen top", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback, "YN");
@@ -265,6 +277,7 @@ int main() {
             .flatcam_options.dia_width = "0.20188",
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = "10",
+            .flatcam_options.remove_gnd_pads = 'Y',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
@@ -282,13 +295,6 @@ int main() {
     state.projects_path = malloc(strlen(projects_path) + 1);
     strcpy(state.projects_path, projects_path);
 
-    state.project = "leddriver";
-
-    int result = eagle_board_parse(&state, "./.files/carcomputer.xml");
-    printf("Result: %d\nStatus message: %s\n", result, state.status_message);
-
-    modify_trace_file(&state);
-    return 0;
     enableRawMode();
 
     if (getWindowSize(&state.row_count, &state.column_count) == -1)

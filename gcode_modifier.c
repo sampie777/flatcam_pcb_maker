@@ -276,7 +276,7 @@ int modify_trace_file(AppState *state) {
             use_mesh_present = true;
         } else if (strcmp(line, G_BEEP_END) == 0) {
             end_print_beep_present = true;
-        } else if (starts_with(line, "G01 X")) {
+        } else if (state->flatcam_options.remove_gnd_pads == 'Y' && starts_with(line, "G01 X")) {
             if (!has_been_checked_for_gnd_pad)
                 has_been_checked_for_gnd_pad = !remove_gnd_pads(state, file, &line);
         } else {

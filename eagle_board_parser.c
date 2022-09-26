@@ -256,7 +256,7 @@ int read_file_libraries(FILE *file, EagleBoardProject *project) {
     return result;
 }
 
-int read_file(AppState *state, FILE *file, EagleBoardProject *project) {
+int read_board_file(AppState *state, FILE *file, EagleBoardProject *project) {
     char *line = NULL;
     int result;
     while (file_read_line(file, &line) == RESULT_OK) {
@@ -360,19 +360,24 @@ void print_project(EagleBoardProject *project) {
     }
 }
 
-int eagle_board_parse(AppState *state, const char *file_name) {
-    FILE *file;
-    int result = open_file(state, file_name, &file);
-    if (result != RESULT_OK) return result;
+int eagle_board_parse(AppState *state) {
+    if (state->eagle_board == NULL || strlen(state->eagle_board->name) == 0) {
+        strcpy(state->status_message, "EAGLE board cannot be empty");
+        return RESULT_FAILED;
+    }
 
-    state->eagle_board = malloc(sizeof(EagleBoardProject));
+    char buffer[256];
+    FILE *file;
+    sprintf(buffer, "%s/%s/%s.brd", state->projects_path, state->project, state->eagle_board->name);
+    int result = open_file(state, buffer, &file);
+    if (result != RESULT_OK) return result;
 
     state->eagle_board->design_rules.pad_hole_to_mask_ratio = -1;
     state->eagle_board->design_rules.pad_min_mask_diameter = -1;
     state->eagle_board->design_rules.pad_max_mask_diameter = -1;
     state->eagle_board->design_rules.pad_shape_long_ratio = 0;
 
-    result = read_file(state, file, state->eagle_board);
+    result = read_board_file(state, file, state->eagle_board);
     fclose(file);
 
     if (result != RESULT_OK) return result;
@@ -380,6 +385,44 @@ int eagle_board_parse(AppState *state, const char *file_name) {
     result = validate_project(state, state->eagle_board);
     if (result != RESULT_OK) return result;
 
-    print_project(state->eagle_board);
+//    print_project(state->eagle_board);
     return RESULT_OK;
+}
+
+int read_job_file(AppState *state, FILE *file) {
+    char *line = NULL;
+    char *match;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if ((match = strstr(line, "\"ProjectId\":")) != NULL) {
+            if (sscanf(match, "\"ProjectId\": \"%s\"", state->eagle_board->name) != 1) {
+                state->eagle_board->name[0] = '\0';
+                strcpy(state->status_message, "No board name found");
+                return RESULT_EMPTY;
+            }
+            strip_extra_chars(state->eagle_board->name);
+        } else if ((match = strstr(line, "\"X\":")) != NULL) {
+            state->eagle_board->width = strtod(&(match[5]), NULL);
+        } else if ((match = strstr(line, "\"Y\":")) != NULL) {
+            state->eagle_board->height = strtod(&(match[5]), NULL);
+        }
+    }
+    if (line) free(line);
+    return RESULT_OK;
+}
+
+int eagle_job_parse(AppState *state) {
+    char buffer[256];
+    FILE *file;
+    sprintf(buffer, "%s/%s/CAMOutputs/GerberFiles/gerber_job.gbrjob", state->projects_path, state->project);
+    int result = open_file(state, buffer, &file);
+    if (result != RESULT_OK) return result;
+
+    if (state->eagle_board == NULL) {
+        state->eagle_board = malloc(sizeof(EagleBoardProject));
+    }
+
+    result = read_job_file(state, file);
+    fclose(file);
+
+    return result;
 }

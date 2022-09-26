@@ -11,10 +11,10 @@
 #include "gnd_pads.h"
 #include "return_codes.h"
 
-#define GND_PAD_MAX_DISTANCE_TO_RADIUS_RATIO 1.3
-#define GND_PAD_MIN_MATCH_RATIO 0.1
+#define GND_PAD_MAX_DISTANCE_TO_RADIUS_RATIO 1.1
+#define GND_PAD_MIN_MATCH_RATIO 0.95
 
-double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double y) {
+void calculate_location_of_pad(const AppState *state, const GndPad *pad, double *pad_x, double *pad_y) {
     double alpha = pad->rotation / 180 * M_PI;
     // Rotation matrix
     double rotated_pad_x = pad->package_pad.x * cos(alpha) - pad->package_pad.y * sin(alpha);
@@ -24,8 +24,14 @@ double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double 
         rotated_pad_x *= -1;
     }
 
-    double pad_x = state->flatcam_options.offset_x + pad->x + rotated_pad_x;
-    double pad_y = state->flatcam_options.offset_y + pad->y + rotated_pad_y;
+    *pad_x = state->flatcam_options.offset_x + pad->x + rotated_pad_x;
+    *pad_y = state->flatcam_options.offset_y + pad->y + rotated_pad_y;
+}
+
+double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double y) {
+    double pad_x;
+    double pad_y;
+    calculate_location_of_pad(state, pad, &pad_x, &pad_y);
 
     double diff_x = pad_x - x;
     double diff_y = pad_y - y;
@@ -36,14 +42,13 @@ double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
     double pad_diameter = pad->package_pad.diameter
                           ? pad->package_pad.diameter
                           : pad->package_pad.drill_size * project->design_rules.pad_hole_to_mask_ratio;
-    // todo: use pad shape to improve diameter accuracy
 
+    // todo: use pad shape to improve diameter accuracy
     if (pad->package_pad.shape == SHAPE_LONG) {
         pad_diameter *= 1 + project->design_rules.pad_shape_long_ratio;
     }
 
-    return min(project->design_rules.pad_max_mask_diameter,
-               max(project->design_rules.pad_min_mask_diameter, pad_diameter)) / 2;
+    return max(project->design_rules.pad_min_mask_diameter, pad_diameter) / 2;
 }
 
 bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
@@ -103,7 +108,7 @@ bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
         }
     }
 
-    printf("Ground pad found! [%d] %s -> %s\n", best_matched_pad_index, nearest_pads[best_matched_pad_index]->name, nearest_pads[best_matched_pad_index]->package_pad.name);
+//    printf("Ground pad found! [%d] %s -> %s\n", best_matched_pad_index, nearest_pads[best_matched_pad_index]->name, nearest_pads[best_matched_pad_index]->package_pad.name);
 
     if (strlen(*start_line) < strlen(line)) {
         *start_line = malloc(strlen(line) + 1);
