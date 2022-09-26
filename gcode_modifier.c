@@ -360,8 +360,7 @@ int modify_silkscreen_file(AppState *state) {
     if (result != RESULT_OK) return result;
 
     if (min_x < state->flatcam_options.offset_x || min_y < state->flatcam_options.offset_y) {
-        strcpy(state->status_message, "Some traces are out of bounds!");
-        return RESULT_FAILED;
+        strcpy(state->status_message, "Warning: Some traces are out of bounds!");
     }
 
     FILE *file, *temp_file;
