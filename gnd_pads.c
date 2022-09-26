@@ -24,8 +24,15 @@ void calculate_location_of_pad(const AppState *state, const GndPad *pad, double 
         rotated_pad_x *= -1;
     }
 
-    *pad_x = state->flatcam_options.offset_x + pad->x + rotated_pad_x;
-    *pad_y = state->flatcam_options.offset_y + pad->y + rotated_pad_y;
+    *pad_x = pad->x + rotated_pad_x;
+    *pad_y = pad->y + rotated_pad_y;
+
+    if (state->flatcam_options.mirror == 'Y') {
+        *pad_x = state->eagle_board->width - *pad_x;
+    }
+
+    *pad_x = state->flatcam_options.offset_x + *pad_x;
+    *pad_y = state->flatcam_options.offset_y + *pad_y;
 }
 
 double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double y) {
@@ -49,6 +56,19 @@ double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
     }
 
     return max(project->design_rules.pad_min_mask_diameter, pad_diameter) / 2;
+}
+
+void gnd_pads_debug(AppState *state) {
+    for (int i = 0; i < state->eagle_board->pad_count; i++) {
+        GndPad *pad = &(state->eagle_board->pads[i]);
+
+        double pad_x;
+        double pad_y;
+        calculate_location_of_pad(state, pad, &pad_x, &pad_y);
+        double radius = calculate_max_pad_radius(state->eagle_board, pad);
+
+        printf("%16s\t(%6.2lf; %6.2lf) @ %6.2lf\n", pad->name, pad_x, pad_y, radius);
+    }
 }
 
 bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
