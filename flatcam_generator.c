@@ -83,7 +83,7 @@ void generate_script(const AppState *state) {
                     "offset drills %lf %lf\n"
                     "%s"
                     "drillcncjob drills -drillz 0.3 -travelz 2.5 -feedrate 1000.0 -tools 1 -outname check_holes_cnc\n"
-                    "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4 -outname drill_holes_cnc\n"
+                    "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 -outname drill_holes_cnc\n"
                     "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\""
                     "%s"
