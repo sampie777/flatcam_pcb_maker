@@ -426,3 +426,52 @@ int eagle_job_parse(AppState *state) {
 
     return result;
 }
+
+int read_profile_file(AppState *state, FILE *file) {
+    int coordinates_found = 0;
+    char *line = NULL;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (!starts_with(line, "X")) continue;
+
+        double x, y;
+        if (sscanf(line, "X%lfY%lfD", &x, &y) != 2) continue;
+        coordinates_found++;
+
+        if (coordinates_found > 5) {
+            strcpy(state->status_message, "Profile gerber contains too much coordinates");
+            break;
+        }
+
+        x /= 10000;
+        y /= 10000;
+
+        if (x < state->eagle_board->min_x) state->eagle_board->min_x = x;
+        if (x > state->eagle_board->max_x) state->eagle_board->max_x = x;
+        if (y < state->eagle_board->min_y) state->eagle_board->min_y = y;
+        if (y > state->eagle_board->max_y) state->eagle_board->max_y = y;
+    }
+    if (line) free(line);
+    return RESULT_OK;
+}
+
+int eagle_profile_parse(AppState *state) {
+    char buffer[256];
+    FILE *file;
+    sprintf(buffer, "%s/%s/CAMOutputs/GerberFiles/profile.gbr", state->projects_path, state->project);
+    int result = open_file(state, buffer, &file);
+    if (result != RESULT_OK) return result;
+
+    if (state->eagle_board == NULL) {
+        state->eagle_board = malloc(sizeof(EagleBoardProject));
+    }
+
+    result = read_profile_file(state, file);
+    fclose(file);
+
+    if (state->eagle_board->min_x == 0 &&
+        state->eagle_board->max_x == 0 &&
+        state->eagle_board->min_y == 0 &&
+        state->eagle_board->max_y == 0)
+        return RESULT_EMPTY;
+    return result;
+}

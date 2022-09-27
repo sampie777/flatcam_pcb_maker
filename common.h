@@ -126,6 +126,10 @@ typedef struct {
     char name[128];
     double width;
     double height;
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
     struct {
         double pad_hole_to_mask_ratio;
         double pad_min_mask_diameter;

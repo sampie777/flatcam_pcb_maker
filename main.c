@@ -85,6 +85,7 @@ void on_project_selected(AppState *state) {
     strcpy(state->project, state->projects[state->project_selection]);
 
     state->eagle_board = NULL;
+    eagle_profile_parse(state);
     if (eagle_job_parse(state) != RESULT_OK) return;
     if (eagle_board_parse(state) != RESULT_OK) return;
 }

@@ -31,6 +31,10 @@ void generate_settings_comment(AppState *state, char **out) {
             SETTINGS_COMMENT_START" file=%s\n"
             SETTINGS_COMMENT_START" width=%lf\n"
             SETTINGS_COMMENT_START" height=%lf\n"
+            SETTINGS_COMMENT_START" min_x=%lf\n"
+            SETTINGS_COMMENT_START" min_y=%lf\n"
+            SETTINGS_COMMENT_START" max_x=%lf\n"
+            SETTINGS_COMMENT_START" max_y=%lf\n"
             SETTINGS_COMMENT_START" traces=%c\n"
             SETTINGS_COMMENT_START" mirror=%c\n"
             SETTINGS_COMMENT_START" offset_x=%lf\n"
@@ -45,6 +49,10 @@ void generate_settings_comment(AppState *state, char **out) {
             state->eagle_board == NULL ? "(null)" : state->eagle_board->name,
             state->eagle_board == NULL ? 0 : state->eagle_board->width,
             state->eagle_board == NULL ? 0 : state->eagle_board->height,
+            state->eagle_board == NULL ? 0 : state->eagle_board->min_x,
+            state->eagle_board == NULL ? 0 : state->eagle_board->min_y,
+            state->eagle_board == NULL ? 0 : state->eagle_board->max_x,
+            state->eagle_board == NULL ? 0 : state->eagle_board->max_y,
             state->flatcam_options.traces,
             state->flatcam_options.mirror,
             state->flatcam_options.offset_x,

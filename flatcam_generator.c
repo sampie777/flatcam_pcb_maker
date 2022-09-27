@@ -26,7 +26,8 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                    "offset silkscreen_top.follow %lf %lf\n"
                                    "%s",
                 state->projects_path, state->project,
-                state->flatcam_options.offset_x, state->flatcam_options.offset_y,
+                state->flatcam_options.offset_x - state->eagle_board->min_x,
+                state->flatcam_options.offset_y - state->eagle_board->min_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
@@ -38,7 +39,8 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                       "offset silkscreen_bottom.follow %lf %lf\n"
                                       "%s",
                 state->projects_path, state->project,
-                state->flatcam_options.offset_x, state->flatcam_options.offset_y,
+                state->flatcam_options.offset_x - state->eagle_board->min_x,
+                state->flatcam_options.offset_y - state->eagle_board->min_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
@@ -89,13 +91,13 @@ void generate_script(const AppState *state) {
                     "%s"
                     "%s",
             state->projects_path, state->project,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror profile -axis Y -box profile\n" : "",
 
             state->projects_path, state->project, traces_file,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width, state->flatcam_options.iterations,
 
@@ -103,8 +105,8 @@ void generate_script(const AppState *state) {
             state->projects_path, state->project, TRACES_OUTPUT_FILE,
 
             state->projects_path, state->project,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
             state->projects_path, state->project, DRILLS_CHECK_OUTPUT_FILE,

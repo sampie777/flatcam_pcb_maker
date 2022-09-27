@@ -28,11 +28,11 @@ void calculate_location_of_pad(const AppState *state, const GndPad *pad, double 
     *pad_y = pad->y + rotated_pad_y;
 
     if (state->flatcam_options.mirror == 'Y') {
-        *pad_x = state->eagle_board->width - *pad_x;
+        *pad_x = state->eagle_board->max_x - *pad_x;
     }
 
-    *pad_x = state->flatcam_options.offset_x + *pad_x;
-    *pad_y = state->flatcam_options.offset_y + *pad_y;
+    *pad_x = (state->flatcam_options.offset_x - state->eagle_board->min_x) + *pad_x;
+    *pad_y = (state->flatcam_options.offset_y - state->eagle_board->min_y) + *pad_y;
 }
 
 double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double y) {
