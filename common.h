@@ -5,6 +5,7 @@
 #ifndef FLATCAM_PCB_MAKER_COMMON_H
 #define FLATCAM_PCB_MAKER_COMMON_H
 
+#include <stdbool.h>
 #include "local_settings.h"
 
 #define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
@@ -50,6 +51,7 @@ enum FlatcamOptions {
     FLATCAM_DIA_WIDTH,
     FLATCAM_FEEDRATE,
     FLATCAM_ITERATIONS,
+    FLATCAM_REMOVE_GND_PADS,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
@@ -69,9 +71,10 @@ typedef struct {
     char mirror;
     double offset_x;
     double offset_y;
-    char dia_width[10];
+    double dia_width;
     char feedrate_etch[8];
-    char iterations[8];
+    int iterations;
+    char remove_gnd_pads;
     char silkscreen_top;
     char silkscreen_bottom;
     char silkscreen_mirror;
@@ -84,11 +87,62 @@ typedef struct {
     char value[64];
     char *destination_char;
     double *destination_double;
+    int *destination_int;
     int max_length;
     void (*callback)(void *);
     char type;
     char char_options[32];
 } DialogOptions;
+
+typedef enum {
+    SHAPE_UNKNOWN = 0,
+    SHAPE_ROUND,
+    SHAPE_OCTAGON,
+    SHAPE_SQUARE,
+    SHAPE_LONG
+} PadShape;
+
+typedef struct {
+    char *name;
+    double x;
+    double y;
+    double rotation;
+    double drill_size;
+    double diameter;
+    PadShape shape;
+} PackagePad;
+
+struct GndPadStruct{
+    char *name;
+    char *library;
+    char *package;
+    PackagePad package_pad;
+    double x;
+    double y;
+    double rotation;
+    bool inverted;
+    bool has_been_removed;
+    struct GndPadStruct *connected_to;
+};
+typedef struct GndPadStruct GndPad;
+
+typedef struct {
+    char name[128];
+    double width;
+    double height;
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
+    struct {
+        double pad_hole_to_mask_ratio;
+        double pad_min_mask_diameter;
+        double pad_max_mask_diameter;
+        double pad_shape_long_ratio;
+    } design_rules;
+    int pad_count;
+    GndPad *pads;
+} EagleBoardProject;
 
 typedef struct {
     int row_count;
@@ -108,6 +162,7 @@ typedef struct {
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
     char status_message[256];
+    EagleBoardProject *eagle_board;
 } AppState;
 
 typedef struct {

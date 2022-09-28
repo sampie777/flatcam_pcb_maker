@@ -26,7 +26,8 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                    "offset silkscreen_top.follow %lf %lf\n"
                                    "%s",
                 state->projects_path, state->project,
-                state->flatcam_options.offset_x, state->flatcam_options.offset_y,
+                state->flatcam_options.offset_x - state->eagle_board->min_x,
+                state->flatcam_options.offset_y - state->eagle_board->min_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
@@ -38,7 +39,8 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                                       "offset silkscreen_bottom.follow %lf %lf\n"
                                       "%s",
                 state->projects_path, state->project,
-                state->flatcam_options.offset_x, state->flatcam_options.offset_y,
+                state->flatcam_options.offset_x - state->eagle_board->min_x,
+                state->flatcam_options.offset_y - state->eagle_board->min_y,
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
@@ -73,7 +75,7 @@ void generate_script(const AppState *state) {
                     "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname traces\n"
                     "offset traces %lf %lf\n"
                     "%s"
-                    "isolate traces -dia %s -passes %s -overlap 1 -combine 1 -outname traces.iso\n"
+                    "isolate traces -dia %lf -passes %d -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
                     "join_geometries joined profile_cutout traces.iso\n"
                     "cncjob joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
@@ -83,19 +85,19 @@ void generate_script(const AppState *state) {
                     "offset drills %lf %lf\n"
                     "%s"
                     "drillcncjob drills -drillz 0.3 -travelz 2.5 -feedrate 1000.0 -tools 1 -outname check_holes_cnc\n"
-                    "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4 -outname drill_holes_cnc\n"
+                    "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 -outname drill_holes_cnc\n"
                     "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\""
                     "%s"
                     "%s",
             state->projects_path, state->project,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror profile -axis Y -box profile\n" : "",
 
             state->projects_path, state->project, traces_file,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width, state->flatcam_options.iterations,
 
@@ -103,8 +105,8 @@ void generate_script(const AppState *state) {
             state->projects_path, state->project, TRACES_OUTPUT_FILE,
 
             state->projects_path, state->project,
-            state->flatcam_options.offset_x,
-            state->flatcam_options.offset_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
             state->projects_path, state->project, DRILLS_CHECK_OUTPUT_FILE,

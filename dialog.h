@@ -18,6 +18,8 @@ void dialog_show_char_with_callback(AppState *state, const char *title, char def
 
 void dialog_show_double_with_callback(AppState *state, const char *title, double default_value, double *destination, void (*callback)(AppState *));
 
+void dialog_show_int_with_callback(AppState *state, const char *title, int default_value, int *destination, void (*callback)(AppState *));
+
 void dialog_options_show_char_with_callback(AppState *state, const char *title, char default_value, char *destination, void (*callback)(AppState *), const char *options);
 
 void dialog_confirm(AppState *state);

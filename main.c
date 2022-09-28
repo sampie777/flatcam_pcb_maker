@@ -16,6 +16,9 @@
 #include "flatcam_generator.h"
 #include "gcode_modifier.h"
 #include "checklist.h"
+#include "eagle_board_parser.h"
+#include "return_codes.h"
+#include "gnd_pads.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -77,6 +80,18 @@ void flatcam_screen_dialog_callback(AppState *state) {
     selection_increase(state, 1);
 }
 
+void on_project_selected(AppState *state) {
+    size_t size = strlen(state->projects[state->project_selection]);
+    state->project = malloc(size + 1);
+    strcpy(state->project, state->projects[state->project_selection]);
+
+    state->eagle_board = NULL;
+    eagle_profile_parse(state);
+    if (eagle_job_parse(state) != RESULT_OK) return;
+    if (eagle_board_parse(state) != RESULT_OK) return;
+    merge_connected_gnd_pads(state);
+}
+
 void confirm_selection(AppState *state) {
     if (state->dialog.show) {
         dialog_confirm(state);
@@ -90,11 +105,9 @@ void confirm_selection(AppState *state) {
                 clearScreen();
                 exit(0);
             }
-            size_t size = strlen(state->projects[state->project_selection]) * sizeof(char);
-            state->project = malloc(size + 1);
-            strcpy(state->project, state->projects[state->project_selection]);
             state->screen = SCREEN_SELECT_ACTION;
             state->action_selection = 0;
+            on_project_selected(state);
             break;
         }
         case SCREEN_SELECT_ACTION: {
@@ -140,13 +153,16 @@ void confirm_selection(AppState *state) {
                     dialog_show_double_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_DIA_WIDTH:
-                    dialog_show_string_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width[0]), 9, flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_FEEDRATE:
                     dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_ITERATIONS:
-                    dialog_show_string_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_int_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations), flatcam_screen_dialog_callback);
+                    break;
+                case FLATCAM_REMOVE_GND_PADS:
+                    dialog_options_show_char_with_callback(state, "Remove GND pads", state->flatcam_options.remove_gnd_pads, &(state->flatcam_options.remove_gnd_pads), flatcam_screen_dialog_callback, "YN");
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
                     dialog_options_show_char_with_callback(state, "Silkscreen top", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback, "YN");
@@ -261,14 +277,16 @@ int main() {
             .flatcam_options.mirror = 'Y',
             .flatcam_options.offset_x = 20,
             .flatcam_options.offset_y = 29,
-            .flatcam_options.dia_width = "0.20188",
+            .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
-            .flatcam_options.iterations = "10",
+            .flatcam_options.iterations = 8,
+            .flatcam_options.remove_gnd_pads = 'Y',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
     };
     state.status_message[0] = '\0';
+    state.eagle_board = NULL;
 
     char projects_path[64];
 #ifndef PROJECTS_PATH
