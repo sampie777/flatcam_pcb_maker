@@ -481,8 +481,15 @@ int total_removed_gnd_pads(AppState *state) {
     return count;
 }
 
+void free_result_messages(AppState *state) {
+    while (state->modify_results.message_count > 0) {
+        free(state->modify_results.messages[--state->modify_results.message_count]);
+    }
+}
+
 void gcode_modify(AppState *state) {
-    state->modify_results.message_count = 0;
+    free_result_messages(state);
+
     gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Traces:");
     if (modify_trace_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 

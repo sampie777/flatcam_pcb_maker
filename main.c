@@ -79,12 +79,19 @@ void flatcam_screen_dialog_callback(AppState *state) {
     selection_increase(state, 1);
 }
 
+void free_eagle_board(AppState *state) {
+    if (state->eagle_board == NULL) return;
+    free(state->eagle_board->pads);
+    free(state->eagle_board);
+    state->eagle_board = NULL;
+}
+
 void on_project_selected(AppState *state) {
     size_t size = strlen(state->projects[state->project_selection]);
     state->project = malloc(size + 1);
     strcpy(state->project, state->projects[state->project_selection]);
 
-    state->eagle_board = NULL;
+    free_eagle_board(state);
     eagle_profile_parse(state);
     if (eagle_job_parse(state) != RESULT_OK) return;
     if (eagle_board_parse(state) != RESULT_OK) return;
