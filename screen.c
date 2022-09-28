@@ -145,7 +145,7 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
 void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
     char buffer[128];
     bufferAppend(screen_buffer, NEW_LINE);
-    sprintf(buffer, "PROJECT: %s", state->project);
+    sprintf(buffer, "PROJECT: %s%s%s", SCREEN_COLOR_CYAN, state->project, SCREEN_COLOR_RESET);
     bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
 
