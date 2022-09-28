@@ -45,14 +45,15 @@ double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double 
     return sqrt(diff_x * diff_x + diff_y * diff_y);
 }
 
-double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
+double calculate_max_pad_radius(const AppState *state, GndPad *pad) {
     double pad_diameter = pad->package_pad.diameter
                           ? pad->package_pad.diameter
-                          : pad->package_pad.drill_size * (1 + project->design_rules.pad_hole_to_mask_ratio);
+                          : pad->package_pad.drill_size * (1 + state->eagle_board->design_rules.pad_hole_to_mask_ratio);
 
-    // todo: use pad shape to improve diameter accuracy
+    pad_diameter += 2 * state->flatcam_options.dia_width;
+
     if (pad->package_pad.shape == SHAPE_LONG) {
-        pad_diameter *= 1 + project->design_rules.pad_shape_long_ratio;
+        pad_diameter *= 1 + state->eagle_board->design_rules.pad_shape_long_ratio;
     } else if (pad->package_pad.shape == SHAPE_SQUARE) {
         // Calculate radius of circle bounding the rectangle instead of inner circling the rectangle
         pad_diameter *= sqrt(2.0);
@@ -60,23 +61,23 @@ double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
         pad_diameter *= sqrt(2.0) / cos(M_PI / 8);
     }
 
-    return max(project->design_rules.pad_min_mask_diameter, pad_diameter) / 2;
+    return max(state->eagle_board->design_rules.pad_min_mask_diameter, pad_diameter) / 2;
 }
 
-void gnd_pads_debug(AppState *state) {
+void gnd_pads_debug(const AppState *state) {
     for (int i = 0; i < state->eagle_board->pad_count; i++) {
         GndPad *pad = &(state->eagle_board->pads[i]);
 
         double pad_x;
         double pad_y;
         calculate_location_of_pad(state, pad, &pad_x, &pad_y);
-        double radius = calculate_max_pad_radius(state->eagle_board, pad);
+        double radius = calculate_max_pad_radius(state, pad);
 
         printf("%16s\t(%6.2lf; %6.2lf) @ %6.2lf\n", pad->name, pad_x, pad_y, radius);
     }
 }
 
-bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
+bool remove_gnd_pads(const AppState *state, FILE *file, char **start_line) {
     if (state->eagle_board == NULL) return false;
 
     long start_index = ftell(file);
@@ -95,7 +96,7 @@ bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
         for (int i = 0; i < state->eagle_board->pad_count; i++) {
             GndPad *pad = &(state->eagle_board->pads[i]);
             double distance_to_pad = calculate_distance_to_pad(state, pad, x, y);
-            double pad_radius = calculate_max_pad_radius(state->eagle_board, pad);
+            double pad_radius = calculate_max_pad_radius(state, pad);
             if (distance_to_pad > pad_radius * GND_PAD_MAX_DISTANCE_TO_RADIUS_RATIO) continue;
 
             bool pad_already_found = false;
@@ -118,6 +119,17 @@ bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
     bool is_gnd_pad = false;
     for (int i = 0; i < nearest_pads_count; i++) {
         double match_rate = (double) matches_per_pad[i] / total_lines;
+
+        // Include connected pads
+        GndPad *connected_pad = nearest_pads[i]->connected_to;
+        while (connected_pad != NULL) {
+            for (int j = 0; j < nearest_pads_count; j++) {
+                if (connected_pad != nearest_pads[j]) continue;
+                match_rate += (double) matches_per_pad[j] / total_lines;
+            }
+            connected_pad = connected_pad->connected_to;
+        }
+
         is_gnd_pad |= match_rate > GND_PAD_MIN_MATCH_RATIO;
     }
 
@@ -151,11 +163,11 @@ void merge_connected_gnd_pads(AppState *state) {
         double pad_y;
         GndPad *pad = &(state->eagle_board->pads[i]);
         calculate_location_of_pad(state, pad, &pad_x, &pad_y);
-        double radius = calculate_max_pad_radius(state->eagle_board, pad);
+        double radius = calculate_max_pad_radius(state, pad);
 
         for (int j = i - 1; j >= 0; j--) {
             GndPad *other_pad = &(state->eagle_board->pads[j]);
-            double other_radius = calculate_max_pad_radius(state->eagle_board, other_pad);
+            double other_radius = calculate_max_pad_radius(state, other_pad);
             double distance_between_pads = calculate_distance_to_pad(state, other_pad, pad_x, pad_y);
             if (distance_between_pads >= radius + other_radius + state->flatcam_options.dia_width) continue;
 
