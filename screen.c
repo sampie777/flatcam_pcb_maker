@@ -243,7 +243,7 @@ void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
         if (checklist_checks[i][0] == '-') {
             sprintf(buffer, "      %s ", checklist_checks[i]);
         } else {
-            sprintf(buffer, " [%c]  %s ", i < state->checklist_check_position ? 'X' : ' ', checklist_checks[i]);
+            sprintf(buffer, "%s [%c]  %s %s", i < state->checklist_check_position ? SCREEN_COLOR_GREEN : "", i < state->checklist_check_position ? 'X' : ' ', checklist_checks[i], SCREEN_COLOR_RESET);
         }
         bufferAppend(screen_buffer, buffer);
 
