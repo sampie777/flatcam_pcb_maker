@@ -45,6 +45,19 @@ void dialog_show_double(AppState *state, const char *title, double default_value
     state->dialog.char_options[0] = '\0';
 }
 
+void dialog_show_int(AppState *state, const char *title, int default_value, int *destination) {
+    state->dialog.show = 1;
+    strcpy(state->dialog.title, title);
+    sprintf(state->dialog.default_value, "%d", default_value);
+    auto_format_double_string(state->dialog.default_value);
+    sprintf(state->dialog.value, "%d", default_value);
+    auto_format_double_string(state->dialog.value);
+    state->dialog.destination_int = destination;
+    state->dialog.max_length = max(10, strlen(state->dialog.value) + 2);
+    state->dialog.type = 'd';
+    state->dialog.char_options[0] = '\0';
+}
+
 void dialog_show_string_with_callback(AppState *state, const char *title, const char *default_value, char *destination, int max_length, void (*callback)(AppState *)) {
     dialog_show_string(state, title, default_value, destination, max_length);
     state->dialog.callback = (void (*)(void *)) callback;
@@ -60,6 +73,11 @@ void dialog_show_double_with_callback(AppState *state, const char *title, double
     state->dialog.callback = (void (*)(void *)) callback;
 }
 
+void dialog_show_int_with_callback(AppState *state, const char *title, int default_value, int *destination, void (*callback)(AppState *)) {
+    dialog_show_int(state, title, default_value, destination);
+    state->dialog.callback = (void (*)(void *)) callback;
+}
+
 void dialog_confirm(AppState *state) {
     if (strlen(state->dialog.value) > 0) {
         if (state->dialog.type == 's') {
@@ -68,6 +86,8 @@ void dialog_confirm(AppState *state) {
             *state->dialog.destination_char = state->dialog.value[0];
         } else if (state->dialog.type == 'f') {
             *state->dialog.destination_double = strtod(state->dialog.value, NULL);
+        } else if (state->dialog.type == 'd') {
+            *state->dialog.destination_int = (int) strtol(state->dialog.value, NULL, 10);
         }
     }
     state->dialog.show = 0;

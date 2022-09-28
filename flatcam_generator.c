@@ -75,7 +75,7 @@ void generate_script(const AppState *state) {
                     "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname traces\n"
                     "offset traces %lf %lf\n"
                     "%s"
-                    "isolate traces -dia %lf -passes %s -overlap 1 -combine 1 -outname traces.iso\n"
+                    "isolate traces -dia %lf -passes %d -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
                     "join_geometries joined profile_cutout traces.iso\n"
                     "cncjob joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"

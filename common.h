@@ -73,7 +73,7 @@ typedef struct {
     double offset_y;
     double dia_width;
     char feedrate_etch[8];
-    char iterations[8];
+    int iterations;
     char remove_gnd_pads;
     char silkscreen_top;
     char silkscreen_bottom;
@@ -87,6 +87,7 @@ typedef struct {
     char value[64];
     char *destination_char;
     double *destination_double;
+    int *destination_int;
     int max_length;
     void (*callback)(void *);
     char type;
@@ -120,6 +121,7 @@ struct GndPadStruct{
     double y;
     double rotation;
     bool inverted;
+    bool has_been_removed;
     struct GndPadStruct *connected_to;
 };
 typedef struct GndPadStruct GndPad;

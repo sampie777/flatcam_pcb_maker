@@ -10,7 +10,7 @@
 
 void gnd_pads_debug(const AppState *state);
 
-bool remove_gnd_pads(const AppState *state, FILE *file, char **start_line);
+bool remove_gnd_pads(AppState *state, FILE *file, char **start_line);
 
 void merge_connected_gnd_pads(AppState *state);
 

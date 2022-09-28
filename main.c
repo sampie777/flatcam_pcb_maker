@@ -159,7 +159,7 @@ void confirm_selection(AppState *state) {
                     dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_ITERATIONS:
-                    dialog_show_string_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations[0]), 7, flatcam_screen_dialog_callback);
+                    dialog_show_int_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_REMOVE_GND_PADS:
                     dialog_options_show_char_with_callback(state, "Remove GND pads", state->flatcam_options.remove_gnd_pads, &(state->flatcam_options.remove_gnd_pads), flatcam_screen_dialog_callback, "YN");
@@ -279,7 +279,7 @@ int main() {
             .flatcam_options.offset_y = 29,
             .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
-            .flatcam_options.iterations = "10",
+            .flatcam_options.iterations = 8,
             .flatcam_options.remove_gnd_pads = 'Y',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',

@@ -77,7 +77,52 @@ void gnd_pads_debug(const AppState *state) {
     }
 }
 
-bool remove_gnd_pads(const AppState *state, FILE *file, char **start_line) {
+void update_removed_gnd_pads(AppState *state, GndPad *const *nearest_pads, const int *matches_per_pad, int nearest_pads_count) {
+    int best_matched_pad_index = 0;
+    for (int i = 0; i < nearest_pads_count; i++) {
+        if (matches_per_pad[i] > matches_per_pad[best_matched_pad_index]) {
+            best_matched_pad_index = i;
+        }
+    }
+
+    // Find source pad for connected pad chain
+    GndPad *connected_pad = nearest_pads[best_matched_pad_index];
+    for (int i = 0; i < state->eagle_board->pad_count; i++) {
+        if (&(state->eagle_board->pads[i]) == connected_pad) continue;
+        if (state->eagle_board->pads[i].connected_to != connected_pad) continue;
+
+        connected_pad = &(state->eagle_board->pads[i]);
+        i = 0;
+    }
+
+    // Mark all (connected) pads as removed
+    while (connected_pad != NULL) {
+        connected_pad->has_been_removed = true;
+        connected_pad = connected_pad->connected_to;
+    }
+}
+
+bool is_gnd_pad_match(GndPad *const *nearest_pads, const int *matches_per_pad, int nearest_pads_count, int total_lines) {
+    bool is_gnd_pad = false;
+    for (int i = 0; i < nearest_pads_count; i++) {
+        double match_rate = (double) matches_per_pad[i] / total_lines;
+
+        // Include connected pads
+        GndPad *connected_pad = nearest_pads[i]->connected_to;
+        while (connected_pad != NULL) {
+            for (int j = 0; j < nearest_pads_count; j++) {
+                if (connected_pad != nearest_pads[j]) continue;
+                match_rate += (double) matches_per_pad[j] / total_lines;
+            }
+            connected_pad = connected_pad->connected_to;
+        }
+
+        is_gnd_pad |= match_rate > GND_PAD_MIN_MATCH_RATIO;
+    }
+    return is_gnd_pad;
+}
+
+bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
     if (state->eagle_board == NULL) return false;
 
     long start_index = ftell(file);
@@ -116,42 +161,19 @@ bool remove_gnd_pads(const AppState *state, FILE *file, char **start_line) {
         total_lines++;
     }
 
-    bool is_gnd_pad = false;
-    for (int i = 0; i < nearest_pads_count; i++) {
-        double match_rate = (double) matches_per_pad[i] / total_lines;
-
-        // Include connected pads
-        GndPad *connected_pad = nearest_pads[i]->connected_to;
-        while (connected_pad != NULL) {
-            for (int j = 0; j < nearest_pads_count; j++) {
-                if (connected_pad != nearest_pads[j]) continue;
-                match_rate += (double) matches_per_pad[j] / total_lines;
-            }
-            connected_pad = connected_pad->connected_to;
-        }
-
-        is_gnd_pad |= match_rate > GND_PAD_MIN_MATCH_RATIO;
-    }
+    bool is_gnd_pad = is_gnd_pad_match(nearest_pads, matches_per_pad, nearest_pads_count, total_lines);
 
     if (!is_gnd_pad) {
         fseek(file, start_index, SEEK_SET);
         return false;
     }
 
-    int best_matched_pad_index = 0;
-    for (int i = 0; i < nearest_pads_count; i++) {
-        if (matches_per_pad[i] > matches_per_pad[best_matched_pad_index]) {
-            best_matched_pad_index = i;
-        }
-    }
-
-//    printf("Ground pad found! [%d] %s -> %s\n", best_matched_pad_index, nearest_pads[best_matched_pad_index]->name, nearest_pads[best_matched_pad_index]->package_pad.name);
-
     if (strlen(*start_line) < strlen(line)) {
         *start_line = malloc(strlen(line) + 1);
     }
     strcpy(*start_line, line);
 
+    update_removed_gnd_pads(state, nearest_pads, matches_per_pad, nearest_pads_count);
     return true;
 }
 
