@@ -20,6 +20,8 @@ double bound_double(double value, double min, double max);
 
 void copy_to_clipboard(const char *data);
 
+void open_folder(const char *path);
+
 bool starts_with(const char *source, const char *needle);
 
 void string_replace(char *input, char needle, char replacement);

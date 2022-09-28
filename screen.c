@@ -222,7 +222,8 @@ void draw_modify_gcode_screen(AppState *state, ScreenBuffer *screen_buffer) {
     }
 
     bufferAppend(screen_buffer, NEW_LINE);
-    draw_button(screen_buffer, "Back", true);
+    draw_button(screen_buffer, "Show files", state->modify_gcode_selection == MODIFY_GCODE_OPEN_FILES);
+    draw_button(screen_buffer, "Back", state->modify_gcode_selection == MODIFY_GCODE_BUTTON_BACK);
 }
 
 void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {

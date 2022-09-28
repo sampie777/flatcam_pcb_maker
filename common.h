@@ -61,6 +61,12 @@ enum FlatcamOptions {
     FLATCAM_MAX_VALUE
 };
 
+enum ModifyGcodeActions {
+    MODIFY_GCODE_BUTTON_BACK = 0,
+    MODIFY_GCODE_OPEN_FILES,
+    MODIFY_GCODE_MAX_VALUE,
+};
+
 enum ChecklistActions {
     CHECKLIST_NEXT_CHECK = 0,
     CHECKLIST_BUTTON_BACK,
@@ -160,11 +166,13 @@ typedef struct {
     int projects_count;
 
     int project_selection;
-    int action_selection;
-    int flatcam_option_selection;
+    enum ProjectActions action_selection;
+    enum FlatcamOptions flatcam_option_selection;
+    enum ModifyGcodeActions modify_gcode_selection;
     int dialog_selection;
-    int checklist_selection;
+    enum ChecklistActions checklist_selection;
     int checklist_check_position;
+
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
     char status_message[256];

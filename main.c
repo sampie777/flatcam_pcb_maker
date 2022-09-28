@@ -40,6 +40,9 @@ void selection_increase(AppState *state, int value) {
                 selection_increase(state, value);
             }
             break;
+        case SCREEN_MODIFY_GCODE:
+            state->modify_gcode_selection += value;
+            break;
         case SCREEN_SHOW_CHECKLIST:
             state->checklist_selection += value;
             break;
@@ -63,6 +66,9 @@ void selection_set(AppState *state, int value) {
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection = value;
+            break;
+        case SCREEN_MODIFY_GCODE:
+            state->modify_gcode_selection = value;
             break;
         default:
             break;
@@ -190,7 +196,17 @@ void confirm_selection(AppState *state) {
             break;
         }
         case SCREEN_MODIFY_GCODE:
-            state->screen = SCREEN_SELECT_ACTION;
+            switch (state->modify_gcode_selection) {
+                case MODIFY_GCODE_BUTTON_BACK:
+                    state->screen = SCREEN_SELECT_ACTION;
+                    break;
+                case MODIFY_GCODE_OPEN_FILES: {
+                    char buffer[256];
+                    sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/", state->projects_path, state->project);
+                    open_folder(buffer);
+                    break;
+                }
+            }
             break;
     }
 }
@@ -257,6 +273,7 @@ void app_control(AppState *state) {
     state->project_selection = bound_int(state->project_selection, 0, state->projects_count, true);
     state->action_selection = bound_int(state->action_selection, 0, ACTION_MAX_VALUE - 1, true);
     state->flatcam_option_selection = bound_int(state->flatcam_option_selection, 0, FLATCAM_MAX_VALUE - 1, true);
+    state->modify_gcode_selection = bound_int(state->modify_gcode_selection, 0, MODIFY_GCODE_MAX_VALUE - 1, true);
     state->checklist_selection = bound_int(state->checklist_selection, 0, CHECKLIST_MAX_VALUE - 1, true);
     state->checklist_check_position = bound_int(state->checklist_check_position, 0, checklist_length, false);
     state->dialog_selection = bound_int(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);

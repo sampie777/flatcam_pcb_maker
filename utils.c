@@ -60,7 +60,25 @@ void copy_to_clipboard(const char *data) {
     sprintf(cmd, proto_cmd, data);
     system(cmd);
 #endif
-    printf("=> Copied to clipboard!\n");
+}
+
+void open_folder(const char *path) {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
+    const char proto_cmd[] = "start \"\" \"%s\"";
+    char cmd[strlen(path) + strlen(proto_cmd)];
+    sprintf(cmd, proto_cmd, path);
+    system(cmd);
+#elif __APPLE__
+    const char proto_cmd[] = "open \"%s\"";
+    char cmd[strlen(path) + strlen(proto_cmd)];
+    sprintf(cmd, proto_cmd, path);
+    system(cmd);
+#else
+    const char proto_cmd[] = "nautilus \"%s\" &";
+    char cmd[strlen(path) + strlen(proto_cmd)];
+    sprintf(cmd, proto_cmd, path);
+    system(cmd);
+#endif
 }
 
 bool starts_with(const char *source, const char *needle) {
