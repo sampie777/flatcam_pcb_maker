@@ -70,13 +70,6 @@ void selection_set(AppState *state, int value) {
 }
 
 void flatcam_screen_dialog_callback(AppState *state) {
-    if (state->flatcam_option_selection == FLATCAM_COPPER_LAYER) {
-        if (toupper(state->flatcam_options.traces) == 'T') {
-            state->flatcam_options.mirror = 'N';
-        } else if (toupper(state->flatcam_options.traces) == 'B') {
-            state->flatcam_options.mirror = 'Y';
-        }
-    }
     selection_increase(state, 1);
 }
 
@@ -90,6 +83,17 @@ void on_project_selected(AppState *state) {
     if (eagle_job_parse(state) != RESULT_OK) return;
     if (eagle_board_parse(state) != RESULT_OK) return;
     merge_connected_gnd_pads(state);
+}
+
+void toggle_char(char *source, char *selection) {
+    for (int i = 0; i < strlen(selection); i++) {
+        if (*source != selection[i]) continue;
+        if (i == strlen(selection) - 1)
+            *source = selection[0];
+        else
+            *source = selection[i + 1];
+        return;
+    }
 }
 
 void confirm_selection(AppState *state) {
@@ -142,10 +146,11 @@ void confirm_selection(AppState *state) {
         case SCREEN_GENERATE_FLATCAM: {
             switch (state->flatcam_option_selection) {
                 case FLATCAM_COPPER_LAYER:
-                    dialog_options_show_char_with_callback(state, "Copper layer", state->flatcam_options.traces, &(state->flatcam_options.traces), flatcam_screen_dialog_callback, "TB");
+                    toggle_char(&(state->flatcam_options.traces), "TB");
+                    state->flatcam_options.mirror = state->flatcam_options.traces == 'T' ? 'N' : 'Y';
                     break;
                 case FLATCAM_MIRROR:
-                    dialog_options_show_char_with_callback(state, "Mirror", state->flatcam_options.mirror, &(state->flatcam_options.mirror), flatcam_screen_dialog_callback, "YN");
+                    toggle_char(&(state->flatcam_options.mirror), "YN");
                     break;
                 case FLATCAM_OFFSET_X:
                     dialog_show_double_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x), flatcam_screen_dialog_callback);
@@ -163,16 +168,16 @@ void confirm_selection(AppState *state) {
                     dialog_show_int_with_callback(state, "Iterations", state->flatcam_options.iterations, &(state->flatcam_options.iterations), flatcam_screen_dialog_callback);
                     break;
                 case FLATCAM_REMOVE_GND_PADS:
-                    dialog_options_show_char_with_callback(state, "Remove GND pads", state->flatcam_options.remove_gnd_pads, &(state->flatcam_options.remove_gnd_pads), flatcam_screen_dialog_callback, "YN");
+                    toggle_char(&(state->flatcam_options.remove_gnd_pads), "YN");
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
-                    dialog_options_show_char_with_callback(state, "Silkscreen top", state->flatcam_options.silkscreen_top, &(state->flatcam_options.silkscreen_top), flatcam_screen_dialog_callback, "YN");
+                    toggle_char(&(state->flatcam_options.silkscreen_top), "YN");
                     break;
                 case FLATCAM_SILKSCREEN_BOTTOM:
-                    dialog_options_show_char_with_callback(state, "Silkscreen bottom", state->flatcam_options.silkscreen_bottom, &(state->flatcam_options.silkscreen_bottom), flatcam_screen_dialog_callback, "YN");
+                    toggle_char(&(state->flatcam_options.silkscreen_bottom), "YN");
                     break;
                 case FLATCAM_SILKSCREEN_MIRROR:
-                    dialog_options_show_char_with_callback(state, "Mirror silkscreen", state->flatcam_options.silkscreen_mirror, &(state->flatcam_options.silkscreen_mirror), flatcam_screen_dialog_callback, "YN");
+                    toggle_char(&(state->flatcam_options.silkscreen_mirror), "YN");
                     break;
                 case FLATCAM_BUTTON_GENERATE:
                     flatcam_generate(state);
