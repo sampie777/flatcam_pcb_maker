@@ -28,7 +28,7 @@ void calculate_location_of_pad(const AppState *state, const GndPad *pad, double 
     *pad_y = pad->y + rotated_pad_y;
 
     if (state->flatcam_options.mirror == 'Y') {
-        *pad_x = state->eagle_board->max_x - *pad_x;
+        *pad_x = state->eagle_board->min_x + state->eagle_board->max_x - *pad_x;
     }
 
     *pad_x = (state->flatcam_options.offset_x - state->eagle_board->min_x) + *pad_x;
@@ -48,11 +48,16 @@ double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double 
 double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad) {
     double pad_diameter = pad->package_pad.diameter
                           ? pad->package_pad.diameter
-                          : pad->package_pad.drill_size * project->design_rules.pad_hole_to_mask_ratio;
+                          : pad->package_pad.drill_size * (1 + project->design_rules.pad_hole_to_mask_ratio);
 
     // todo: use pad shape to improve diameter accuracy
     if (pad->package_pad.shape == SHAPE_LONG) {
         pad_diameter *= 1 + project->design_rules.pad_shape_long_ratio;
+    } else if (pad->package_pad.shape == SHAPE_SQUARE) {
+        // Calculate radius of circle bounding the rectangle instead of inner circling the rectangle
+        pad_diameter *= sqrt(2.0);
+    } else if (pad->package_pad.shape == SHAPE_OCTAGON) {
+        pad_diameter *= sqrt(2.0) / cos(M_PI / 8);
     }
 
     return max(project->design_rules.pad_min_mask_diameter, pad_diameter) / 2;
