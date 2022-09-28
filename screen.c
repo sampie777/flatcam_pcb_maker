@@ -184,7 +184,10 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     auto_format_double_string(buffer);
     draw_text_field_string(screen_buffer, "Offset Y", buffer, state->flatcam_option_selection == FLATCAM_OFFSET_Y);
 
-    draw_text_field_string(screen_buffer, "Dia width", state->flatcam_options.dia_width, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
+    sprintf(buffer, "%lf", state->flatcam_options.dia_width);
+    auto_format_double_string(buffer);
+    draw_text_field_string(screen_buffer, "Dia width", buffer, state->flatcam_option_selection == FLATCAM_DIA_WIDTH);
+
     draw_text_field_string(screen_buffer, "Feedrate", state->flatcam_options.feedrate_etch, state->flatcam_option_selection == FLATCAM_FEEDRATE);
     draw_text_field_string(screen_buffer, "Iterations", state->flatcam_options.iterations, state->flatcam_option_selection == FLATCAM_ITERATIONS);
     draw_text_field_char(screen_buffer, "Remove GND pads", state->flatcam_options.remove_gnd_pads, state->flatcam_option_selection == FLATCAM_REMOVE_GND_PADS);

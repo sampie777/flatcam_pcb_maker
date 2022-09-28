@@ -85,6 +85,7 @@ int read_file_gnd_signal(AppState *state, FILE *file, EagleBoardProject *project
         pad->x = 0;
         pad->y = 0;
         pad->rotation = 0;
+        pad->connected_to = NULL;
 
         if (pad->name == NULL || pad->package_pad.name == NULL) {
             strcpy(state->status_message, "Failed to get GND pad specifics");

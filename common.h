@@ -71,7 +71,7 @@ typedef struct {
     char mirror;
     double offset_x;
     double offset_y;
-    char dia_width[10];
+    double dia_width;
     char feedrate_etch[8];
     char iterations[8];
     char remove_gnd_pads;
@@ -111,7 +111,7 @@ typedef struct {
     PadShape shape;
 } PackagePad;
 
-typedef struct {
+struct GndPadStruct{
     char *name;
     char *library;
     char *package;
@@ -120,7 +120,9 @@ typedef struct {
     double y;
     double rotation;
     bool inverted;
-} GndPad;
+    struct GndPadStruct *connected_to;
+};
+typedef struct GndPadStruct GndPad;
 
 typedef struct {
     char name[128];

@@ -39,7 +39,7 @@ void generate_settings_comment(AppState *state, char **out) {
             SETTINGS_COMMENT_START" mirror=%c\n"
             SETTINGS_COMMENT_START" offset_x=%lf\n"
             SETTINGS_COMMENT_START" offset_y=%lf\n"
-            SETTINGS_COMMENT_START" dia_width=%s\n"
+            SETTINGS_COMMENT_START" dia_width=%lf\n"
             SETTINGS_COMMENT_START" feedrate_etch=%s\n"
             SETTINGS_COMMENT_START" iterations=%s\n"
             SETTINGS_COMMENT_START" remove_gnd_pads=%c\n"

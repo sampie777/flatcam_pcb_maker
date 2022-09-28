@@ -12,4 +12,10 @@ void gnd_pads_debug(AppState *state);
 
 bool remove_gnd_pads(AppState *state, FILE *file, char **start_line);
 
+void merge_connected_gnd_pads(AppState *state);
+
+void calculate_location_of_pad(const AppState *state, const GndPad *pad, double *pad_x, double *pad_y);
+
+double calculate_max_pad_radius(EagleBoardProject *project, GndPad *pad);
+
 #endif //FLATCAM_PCB_MAKER_GND_PADS_H

@@ -137,3 +137,25 @@ bool remove_gnd_pads(AppState *state, FILE *file, char **start_line) {
 
     return true;
 }
+
+void merge_connected_gnd_pads(AppState *state) {
+    if (state->eagle_board == NULL) return;
+
+    for (int i = 0; i < state->eagle_board->pad_count; i++) {
+        double pad_x;
+        double pad_y;
+        GndPad *pad = &(state->eagle_board->pads[i]);
+        calculate_location_of_pad(state, pad, &pad_x, &pad_y);
+        double radius = calculate_max_pad_radius(state->eagle_board, pad);
+
+        for (int j = i - 1; j >= 0; j--) {
+            GndPad *other_pad = &(state->eagle_board->pads[j]);
+            double other_radius = calculate_max_pad_radius(state->eagle_board, other_pad);
+            double distance_between_pads = calculate_distance_to_pad(state, other_pad, pad_x, pad_y);
+            if (distance_between_pads >= radius + other_radius + state->flatcam_options.dia_width) continue;
+
+            pad->connected_to = other_pad;
+            break;
+        }
+    }
+}
