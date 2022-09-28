@@ -32,6 +32,7 @@ enum Screens {
     SCREEN_SELECT_PROJECT = 0,
     SCREEN_SELECT_ACTION,
     SCREEN_GENERATE_FLATCAM,
+    SCREEN_MODIFY_GCODE,
     SCREEN_SHOW_CHECKLIST,
 };
 
@@ -145,6 +146,11 @@ typedef struct {
 } EagleBoardProject;
 
 typedef struct {
+    int message_count;
+    char **messages;
+} ModifyGcodeResults;
+
+typedef struct {
     int row_count;
     int column_count;
     enum Screens screen;
@@ -163,6 +169,7 @@ typedef struct {
     DialogOptions dialog;
     char status_message[256];
     EagleBoardProject *eagle_board;
+    ModifyGcodeResults modify_results;
 } AppState;
 
 typedef struct {

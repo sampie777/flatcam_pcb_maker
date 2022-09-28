@@ -117,6 +117,7 @@ void confirm_selection(AppState *state) {
                     state->flatcam_option_selection = FLATCAM_BUTTON_GENERATE;
                     break;
                 case ACTION_MODIFY_GCODE:
+                    state->screen = SCREEN_MODIFY_GCODE;
                     gcode_modify(state);
                     break;
                 case ACTION_SHOW_CHECKLIST:
@@ -183,6 +184,9 @@ void confirm_selection(AppState *state) {
             }
             break;
         }
+        case SCREEN_MODIFY_GCODE:
+            state->screen = SCREEN_SELECT_ACTION;
+            break;
     }
 }
 

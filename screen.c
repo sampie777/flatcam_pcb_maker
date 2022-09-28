@@ -210,6 +210,21 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     draw_button(screen_buffer, "Back", state->flatcam_option_selection == FLATCAM_BUTTON_BACK);
 }
 
+void draw_modify_gcode_screen(AppState *state, ScreenBuffer *screen_buffer) {
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, "GCODE MODIFIED");
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    for (int i = 0; i < state->modify_results.message_count; i++) {
+        bufferAppend(screen_buffer, state->modify_results.messages[i]);
+        bufferAppend(screen_buffer, NEW_LINE);
+    }
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    draw_button(screen_buffer, "Back", true);
+}
+
 void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
     char buffer[256];
     bufferAppend(screen_buffer, NEW_LINE);
@@ -315,6 +330,9 @@ void screen_draw(AppState *state, ScreenBuffer *screen_buffer) {
             break;
         case SCREEN_GENERATE_FLATCAM:
             draw_generate_flatcam_screen(state, screen_buffer);
+            break;
+        case SCREEN_MODIFY_GCODE:
+            draw_modify_gcode_screen(state, screen_buffer);
             break;
         case SCREEN_SHOW_CHECKLIST:
             draw_show_checklist_screen(state, screen_buffer);

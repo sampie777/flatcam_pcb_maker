@@ -11,6 +11,7 @@
 #include "return_codes.h"
 #include "file_utils.h"
 #include "gnd_pads.h"
+#include "screen.h"
 
 #define TEMP_FILE_NAME "tempfile"
 
@@ -24,6 +25,36 @@
 #define G_PAUSE "G4 S20"
 #define G_HOME_AXIS "G28"
 #define G_LCD_MESSAGE "M117"
+
+typedef enum {
+    STATUS_MESSAGE_INFO,
+    STATUS_MESSAGE_SUCCESS,
+    STATUS_MESSAGE_WARNING,
+    STATUS_MESSAGE_ERROR,
+} StatusMessageType;
+
+void gcode_add_status_message(AppState *state, StatusMessageType type, const char *message) {
+    state->modify_results.messages = realloc(state->modify_results.messages, sizeof(char *) * (state->modify_results.message_count + 1));
+
+    char *color_code = "";
+    switch (type) {
+        case STATUS_MESSAGE_SUCCESS:
+            color_code = SCREEN_COLOR_GREEN;
+            break;
+        case STATUS_MESSAGE_WARNING:
+            color_code = SCREEN_COLOR_YELLOW;
+            break;
+        case STATUS_MESSAGE_ERROR:
+            color_code = SCREEN_COLOR_RED;
+            break;
+        default:
+            break;
+    }
+
+    state->modify_results.messages[state->modify_results.message_count] = malloc(strlen(message) + 16);
+    sprintf(state->modify_results.messages[state->modify_results.message_count], "   %s%s%s", color_code, message, SCREEN_COLOR_RESET);
+    state->modify_results.message_count++;
+}
 
 void generate_settings_comment(AppState *state, char **out) {
     *out = malloc(1024);
@@ -72,7 +103,9 @@ int replace_file_with_tempfile(AppState *state, const char *filename) {
     sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", state->projects_path, state->project, filename);
     int result = copy_file(TEMP_FILE_NAME, buffer);
     if (result != RESULT_OK) {
-        sprintf(state->status_message, "Failed to modify file %s", buffer);
+        char buffer2[512];
+        sprintf(buffer2, "   Failed to modify file %s.", buffer);
+        gcode_add_status_message(state, STATUS_MESSAGE_ERROR, buffer2);
     }
     remove(TEMP_FILE_NAME);
     return result;
@@ -83,14 +116,16 @@ int open_files(AppState *state, const char *filename, FILE **input_file, FILE **
     sprintf(buffer, "%s/%s/CAMOutputs/flatCAM/%s", state->projects_path, state->project, filename);
     *input_file = fopen(buffer, "r");
     if (*input_file == NULL) {
-        sprintf(state->status_message, "Failed to open file %s", buffer);
+        char buffer2[512];
+        sprintf(buffer2, "   Failed to open file %s.", buffer);
+        gcode_add_status_message(state, STATUS_MESSAGE_ERROR, buffer2);
         return RESULT_FAILED;
     }
 
     if (output_file != NULL) {
         *output_file = fopen(TEMP_FILE_NAME, "w");
         if (*output_file == NULL) {
-            strcpy(state->status_message, "Failed to open temp file");
+            gcode_add_status_message(state, STATUS_MESSAGE_ERROR, "   Failed to open temp file.");
             return RESULT_FAILED;
         }
     }
@@ -132,7 +167,7 @@ int get_profile_bounds(AppState *state, double *min_x, double *min_y, double *ma
     fclose(file);
 
     if (!at_least_one_found) {
-        strcpy(state->status_message, "Failed to get profile min/max bounds");
+        gcode_add_status_message(state, STATUS_MESSAGE_ERROR, "   Failed to get profile min/max bounds.");
         return RESULT_FAILED;
     }
     return RESULT_OK;
@@ -388,7 +423,7 @@ int modify_silkscreen_file(AppState *state) {
     if (result != RESULT_OK) return result;
 
     if (min_x < state->flatcam_options.offset_x || min_y < state->flatcam_options.offset_y) {
-        strcpy(state->status_message, "Warning: Some traces are out of bounds!");
+        gcode_add_status_message(state, STATUS_MESSAGE_WARNING, "   Some traces are out of bounds!");
     }
 
     FILE *file, *temp_file;
@@ -447,20 +482,23 @@ int total_removed_gnd_pads(AppState *state) {
 }
 
 void gcode_modify(AppState *state) {
-    int result = modify_trace_file(state);
-    result |= modify_silkscreen_file(state);
-    result |= modify_check_holes_file(state);
-    result |= modify_drill_file(state);
+    state->modify_results.message_count = 0;
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Traces:");
+    if (modify_trace_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 
     int removed_gnd_pads = total_removed_gnd_pads(state);
     if (state->flatcam_options.remove_gnd_pads == 'Y' && removed_gnd_pads != state->eagle_board->pad_count) {
         char buffer[256];
-        sprintf(buffer, "Only removed %d/%d GND pads", removed_gnd_pads, state->eagle_board->pad_count);
-        strcpy(state->status_message, buffer);
-        result |= RESULT_FAILED;
+        sprintf(buffer, "   Only removed %d/%d GND pads.", removed_gnd_pads, state->eagle_board->pad_count);
+        gcode_add_status_message(state, STATUS_MESSAGE_WARNING, buffer);
     }
 
-    if (result == RESULT_OK) {
-        strcpy(state->status_message, "Modified!");
-    }
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Silkscreen:");
+    if (modify_silkscreen_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Check-holes:");
+    if (modify_check_holes_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Drills:");
+    if (modify_drill_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 }
