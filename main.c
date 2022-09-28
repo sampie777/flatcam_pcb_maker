@@ -293,9 +293,10 @@ int main() {
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
+            .eagle_board = NULL,
+            .modify_results.messages = NULL,
     };
     state.status_message[0] = '\0';
-    state.eagle_board = NULL;
 
     char projects_path[64];
 #ifndef PROJECTS_PATH
