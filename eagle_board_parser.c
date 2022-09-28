@@ -205,7 +205,7 @@ int read_file_libraries(FILE *file, EagleBoardProject *project) {
 
         if (!starts_with(line, "<pad ")) continue;
 
-        char pad_name[64], x_text[64], y_text[64], rotation_text[64], drill_text[64], diameter_text[64], shape_text[64] = "";
+        char pad_name[64] = "", x_text[64] = "", y_text[64] = "", rotation_text[64] = "", drill_text[64] = "", diameter_text[64] = "", shape_text[64] = "";
         char *part = strtok(line, " ");
         while ((part = strtok(NULL, " ")) != NULL) {
             sscanf(part, "name=\"%s\"", pad_name);
