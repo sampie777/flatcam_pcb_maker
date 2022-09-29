@@ -223,6 +223,10 @@ int modify_drill_file(AppState *state) {
             fprintf(temp_file, "G0 %s\n", line);
             continue;
         }
+        if (starts_with(line, G_SPINDLE_ON) && !use_mesh_present) {
+            fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
+            use_mesh_present = true;
+        }
         if (starts_with(line, G_SPINDLE_ON) && !pause_print_present) {
             fprintf(temp_file, G_BEEP"\n"
                                G_LCD_MESSAGE" Set Z-offset to -3.0 mm\n"
@@ -233,6 +237,7 @@ int modify_drill_file(AppState *state) {
                                G_SPINDLE_ON"\n"
                                G_SPINDLE_ON"\n"
                                G_SPINDLE_ON"\n"
+                               G_LCD_MESSAGE" Remove Z-stop!\n"
                                G_BEEP"\n");
             pause_print_present = true;
             continue;
@@ -251,10 +256,7 @@ int modify_drill_file(AppState *state) {
             continue;
         }
 
-        if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            use_mesh_present = true;
-        } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
+        if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
             fprintf(temp_file, G_BEEP_END"\n");
             end_print_beep_present = true;
         } else if (strcmp(line, G_BEEP) == 0) {
