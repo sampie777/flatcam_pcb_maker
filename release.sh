@@ -20,7 +20,7 @@ HEREDOC
 function setVersion() {
     version="$1"
 
-    sed -i -e "s/APP_VERSION = \"0.0.0\";/APP_VERSION = \"${version}\";/g" ./app_version.h
+    sed -i -e "s/APP_VERSION = \".*\";/APP_VERSION = \"${version}\";/g" ./app_version.h
 }
 
 function releasePatch {
