@@ -68,6 +68,7 @@ void generate_settings_comment(AppState *state, char **out) {
             SETTINGS_COMMENT_START" max_y=%lf\n"
             SETTINGS_COMMENT_START" traces=%c\n"
             SETTINGS_COMMENT_START" mirror=%c\n"
+            SETTINGS_COMMENT_START" cutout_profile=%c\n"
             SETTINGS_COMMENT_START" offset_x=%lf\n"
             SETTINGS_COMMENT_START" offset_y=%lf\n"
             SETTINGS_COMMENT_START" dia_width=%lf\n"
@@ -86,6 +87,7 @@ void generate_settings_comment(AppState *state, char **out) {
             state->eagle_board == NULL ? 0 : state->eagle_board->max_y,
             state->flatcam_options.traces,
             state->flatcam_options.mirror,
+            state->flatcam_options.cutout_profile,
             state->flatcam_options.offset_x,
             state->flatcam_options.offset_y,
             state->flatcam_options.dia_width,

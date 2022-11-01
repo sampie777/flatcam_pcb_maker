@@ -59,6 +59,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
 
 void generate_script(const AppState *state) {
     int should_mirror = state->flatcam_options.mirror == 'Y';
+    int should_cutout_profile = state->flatcam_options.cutout_profile == 'Y';
     int traces_are_on_bottom = state->flatcam_options.traces == 'B';
 
     char *traces_file = traces_are_on_bottom ? "copper_bottom" : "copper_top";
@@ -77,7 +78,7 @@ void generate_script(const AppState *state) {
                     "%s"
                     "isolate traces -dia %lf -passes %d -overlap 1 -combine 1 -outname traces.iso\n"
                     "\n"
-                    "join_geometries joined profile_cutout traces.iso\n"
+                    "join_geometries joined %s traces.iso\n"
                     "cncjob joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
                     "write_gcode joined_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "\n"
@@ -101,6 +102,7 @@ void generate_script(const AppState *state) {
             should_mirror ? "mirror traces -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width, state->flatcam_options.iterations,
 
+            should_cutout_profile ? "profile_cutout" : "",
             state->flatcam_options.feedrate_etch,
             state->projects_path, state->project, TRACES_OUTPUT_FILE,
 

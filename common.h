@@ -47,6 +47,7 @@ enum ProjectActions {
 enum FlatcamOptions {
     FLATCAM_COPPER_LAYER = 0,
     FLATCAM_MIRROR,
+    FLATCAM_CUTOUT_PROFILE,
     FLATCAM_OFFSET_X,
     FLATCAM_OFFSET_Y,
     FLATCAM_DIA_WIDTH,
@@ -76,6 +77,7 @@ enum ChecklistActions {
 typedef struct {
     char traces;
     char mirror;
+    char cutout_profile;
     double offset_x;
     double offset_y;
     double dia_width;

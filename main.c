@@ -166,6 +166,9 @@ void confirm_selection(AppState *state) {
                 case FLATCAM_MIRROR:
                     toggle_char(&(state->flatcam_options.mirror), "YN");
                     break;
+                case FLATCAM_CUTOUT_PROFILE:
+                    toggle_char(&(state->flatcam_options.cutout_profile), "YN");
+                    break;
                 case FLATCAM_OFFSET_X:
                     dialog_show_double_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x), flatcam_screen_dialog_callback);
                     break;
@@ -291,6 +294,7 @@ void app_control(AppState *state) {
 
     state->flatcam_options.traces = (char) toupper(state->flatcam_options.traces);
     state->flatcam_options.mirror = (char) toupper(state->flatcam_options.mirror);
+    state->flatcam_options.cutout_profile = (char) toupper(state->flatcam_options.cutout_profile);
     state->flatcam_options.silkscreen_top = (char) toupper(state->flatcam_options.silkscreen_top);
     state->flatcam_options.silkscreen_bottom = (char) toupper(state->flatcam_options.silkscreen_bottom);
     state->flatcam_options.silkscreen_mirror = (char) toupper(state->flatcam_options.silkscreen_mirror);
@@ -309,6 +313,7 @@ int main() {
     AppState state = {
             .flatcam_options.traces = 'B',
             .flatcam_options.mirror = 'Y',
+            .flatcam_options.cutout_profile = 'Y',
             .flatcam_options.offset_x = 12,
             .flatcam_options.offset_y = 16,
             .flatcam_options.dia_width = 0.20188,
