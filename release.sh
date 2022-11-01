@@ -43,7 +43,7 @@ function releaseMinor {
 
   # Create patch version
   CURRENT_VERSION=$(cat ./app_version.h | grep "APP_VERSION = \"" | awk -F'"' '{print $2}')
-  RELEASE_VERSION=$(echo ${CURRENT_VERSION} | awk -F'.' '{print $1"."$2+1".0"}')
+  RELEASE_VERSION=$(echo ${CURRENT_VERSION} | awk -F'.' '{print $1"."$2".0"}')
 
   setVersion "${RELEASE_VERSION}" || exit 1
 
