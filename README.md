@@ -1,4 +1,4 @@
-This quick-and-dirity tool was created to assist me in generating Gcode for creating PCBs using my 3D printer. 
+This quick-and-dirty tool was created to assist me in generating Gcode for creating PCBs using my 3D printer. 
 
 The tool is used in combination with EAGLE (9.7v) and FlatCAM (8.5v) software. It is compatible with Ubuntu 20 and Windows 7.
 

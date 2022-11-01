@@ -87,6 +87,7 @@ void free_eagle_board(AppState *state) {
 }
 
 void on_project_selected(AppState *state) {
+    strcpy(state->status_message, "");
     size_t size = strlen(state->projects[state->project_selection]);
     state->project = malloc(size + 1);
     strcpy(state->project, state->projects[state->project_selection]);
