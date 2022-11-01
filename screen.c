@@ -10,6 +10,7 @@
 #include "screen.h"
 #include "utils.h"
 #include "checklist.h"
+#include "app_version.h"
 
 #define NEW_LINE "\r\n\x1b[K"
 
@@ -149,7 +150,7 @@ void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
 
-    if (state->eagle_board != NULL ) {
+    if (state->eagle_board != NULL) {
         sprintf(buffer, "Board dimensions: [%.1lf, %.1lf]", state->eagle_board->width, state->eagle_board->height);
         bufferAppend(screen_buffer, buffer);
         bufferAppend(screen_buffer, NEW_LINE);
@@ -285,10 +286,29 @@ void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, NEW_LINE);
 }
 
-void draw_status_message(AppState *state, ScreenBuffer *screen_buffer) {
+void draw_app_title(AppState *state, ScreenBuffer *screen_buffer) {
+    char buffer[64];
+    sprintf(buffer, "PCB MAKER  v%s", APP_VERSION);
+
+    int left_padding_count = (int) (state->column_count - strlen(buffer)) / 2;
+    char left_padding[left_padding_count + 1];
+    for (int i = 0; i < left_padding_count; i++) {
+        left_padding[i] = ' ';
+    }
+    left_padding[left_padding_count] = '\0';
+
+    bufferAppend(screen_buffer, left_padding);
+    bufferAppend(screen_buffer, SCREEN_COLOR_CYAN);
+    bufferAppend(screen_buffer, buffer);
+    bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
+    bufferAppend(screen_buffer, NEW_LINE);
+}
+
+void
+draw_status_message(AppState *state, ScreenBuffer *screen_buffer) {
     size_t message_length = strlen(state->status_message);
     if (message_length == 0) {
-        bufferAppend(screen_buffer, NEW_LINE);
+        draw_app_title(state, screen_buffer);
         return;
     }
 
