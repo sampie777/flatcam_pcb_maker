@@ -196,6 +196,52 @@ bool limit_line_to_bounds(char **line, double min_x, double min_y, double max_x,
     return true;
 }
 
+int modify_pre_drill_file(AppState *state) {
+    FILE *file, *temp_file;
+    int result = open_files(state, PRE_DRILLS_OUTPUT_FILE, &file, &temp_file);
+    if (result != RESULT_OK) return result;
+
+    bool settings_comment_present = false;
+    bool use_mesh_present = false;
+    bool end_print_beep_present = false;
+
+    char *line = NULL;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
+        if (starts_with(line, "F")) {
+            fprintf(temp_file, "G0 %s\n", line);
+            continue;
+        }
+
+        if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
+            fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
+            use_mesh_present = true;
+        } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
+            fprintf(temp_file, G_BEEP_END"\n");
+            end_print_beep_present = true;
+        } else if (strcmp(line, G_USE_MESH) == 0) {
+            use_mesh_present = true;
+        } else if (strcmp(line, G_BEEP_END) == 0) {
+            end_print_beep_present = true;
+        }
+
+        fprintf(temp_file, "%s\n", line);
+    }
+
+    if (line) free(line);
+
+    fclose(temp_file);
+    fclose(file);
+    return replace_file_with_tempfile(state, PRE_DRILLS_OUTPUT_FILE);
+}
+
 int modify_drill_file(AppState *state) {
     double min_x, min_y, max_x, max_y;
     int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
@@ -348,6 +394,70 @@ int modify_check_holes_file(AppState *state) {
     fclose(temp_file);
     fclose(file);
     return replace_file_with_tempfile(state, DRILLS_CHECK_OUTPUT_FILE);
+}
+
+int modify_check_holes_mirrored_file(AppState *state) {
+    double min_x, min_y, max_x, max_y;
+    int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
+    if (result != RESULT_OK) return result;
+
+    FILE *file, *temp_file;
+    result = open_files(state, DRILLS_MIRRORED_CHECK_OUTPUT_FILE, &file, &temp_file);
+    if (result != RESULT_OK) return result;
+
+    bool settings_comment_present = false;
+    bool use_mesh_present = false;
+
+    bool removed_a_hole = false;
+    char *line = NULL;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
+        if (starts_with(line, "F")) {
+            fprintf(temp_file, "G0 %s\n", line);
+            continue;
+        }
+        if (strcmp(line, "G01 Z0") == 0) {
+            if (!removed_a_hole) fprintf(temp_file, G_PAUSE" ; Pause\n"G_BEEP"\n");
+            continue;
+        }
+        if (strcmp(line, "G01 Z0.3000") == 0) {
+            if (!removed_a_hole) fprintf(temp_file, "G01 Z0.3000 F100.0\n");
+            continue;
+        }
+        if (strcmp(line, "G00 Z2.5000") == 0) {
+            fprintf(temp_file, "G00 Z2.5000 F1000.0\n\n");
+            continue;
+        }
+
+        if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
+            fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
+            use_mesh_present = true;
+        } else if (strcmp(line, G_USE_MESH) == 0) {
+            use_mesh_present = true;
+        } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
+            removed_a_hole = false;
+            if (limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true)) {
+                // Remove these holes completely
+                removed_a_hole = true;
+                fprintf(temp_file, "; Removed hole because it's out of bounds: %s\n", line);
+                continue;
+            }
+        }
+
+        fprintf(temp_file, "%s\n", line);
+    }
+    if (line) free(line);
+
+    fclose(temp_file);
+    fclose(file);
+    return replace_file_with_tempfile(state, DRILLS_MIRRORED_CHECK_OUTPUT_FILE);
 }
 
 int modify_trace_file(AppState *state) {
@@ -504,12 +614,18 @@ void gcode_modify(AppState *state) {
         gcode_add_status_message(state, STATUS_MESSAGE_WARNING, buffer);
     }
 
-    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Silkscreen:");
-    if (modify_silkscreen_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Pre-drills:");
+    if (modify_pre_drill_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 
     gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Check-holes:");
     if (modify_check_holes_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 
     gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Drills:");
     if (modify_drill_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Check-holes mirrored:");
+    if (modify_check_holes_mirrored_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Silkscreen:");
+    if (modify_silkscreen_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 }

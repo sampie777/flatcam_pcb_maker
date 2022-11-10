@@ -9,9 +9,11 @@
 #include "local_settings.h"
 
 #define TRACES_OUTPUT_FILE "0_draw_traces.gcode"
-#define SILKSCREEN_OUTPUT_FILE "1_draw_silkscreen.gcode"
+#define PRE_DRILLS_OUTPUT_FILE "1_pre_drill_holes.gcode"
 #define DRILLS_CHECK_OUTPUT_FILE "2_check_holes.gcode"
 #define DRILLS_OUTPUT_FILE "3_drill_holes.gcode"
+#define DRILLS_MIRRORED_CHECK_OUTPUT_FILE "4_check_mirrored_holes_cnc.gcode"
+#define SILKSCREEN_OUTPUT_FILE "5_draw_silkscreen.gcode"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 

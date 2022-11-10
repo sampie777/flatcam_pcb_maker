@@ -44,11 +44,18 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
                 should_mirror ? "mirror silkscreen.follow -axis Y -box profile\n" : "");
     }
 
-    *output = malloc(strlen(traces_top_output) + strlen(traces_bottom_output) + 512);
-    sprintf(*output, "\n\n%s%s"
+    *output = malloc(strlen(traces_top_output) + strlen(traces_bottom_output) + 1024);
+    sprintf(*output, "\n\n"
+                     "join_geometries drills_mirrored drills\n"
+                     "%s"
+                     "drillcncjob drills_mirrored -drillz 0.3 -travelz 2.5 -feedrate 1000.0 -tools 1 -outname check_holes_mirrored_cnc\n"
+                     "write_gcode check_holes_mirrored_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
+                     "\n%s%s"
                      "join_geometries silkscreen_joined %s %s\n"
                      "cncjob silkscreen_joined -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
                      "write_gcode silkscreen_joined_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"",
+            should_mirror ? "" : "mirror drills_mirrored -axis Y -box profile\n",
+            state->projects_path, state->project, DRILLS_MIRRORED_CHECK_OUTPUT_FILE,
             traces_top_output, traces_bottom_output,
             should_silkscreen_top ? "silkscreen_top.follow" : "",
             should_silkscreen_bottom ? "silkscreen_bottom.follow" : "",
@@ -67,7 +74,7 @@ void generate_script(const AppState *state) {
     char *silkscreen_output;
     generate_silkscreen_commands(state, &silkscreen_output);
 
-    char output[2048];
+    char output[3072];
     sprintf(output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/profile.gbr\" -outname profile\n"
                     "offset profile %lf %lf\n"
                     "%s"
@@ -85,8 +92,10 @@ void generate_script(const AppState *state) {
                     "open_excellon \"%s/%s/CAMOutputs/DrillFiles/drill_1_16.xln\" -outname drills\n"
                     "offset drills %lf %lf\n"
                     "%s"
+                    "drillcncjob drills -drillz 0.0 -travelz 2.0 -feedrate 1000.0 -tools 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 -outname pre_drill_holes_cnc\n"
                     "drillcncjob drills -drillz 0.3 -travelz 2.5 -feedrate 1000.0 -tools 1 -outname check_holes_cnc\n"
                     "drillcncjob drills -drillz -3.0 -travelz 1.5 -feedrate 1000.0 -tools 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 -outname drill_holes_cnc\n"
+                    "write_gcode pre_drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\""
                     "%s"
@@ -111,6 +120,7 @@ void generate_script(const AppState *state) {
             state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
+            state->projects_path, state->project, PRE_DRILLS_OUTPUT_FILE,
             state->projects_path, state->project, DRILLS_CHECK_OUTPUT_FILE,
             state->projects_path, state->project, DRILLS_OUTPUT_FILE,
 
