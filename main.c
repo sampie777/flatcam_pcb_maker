@@ -407,6 +407,8 @@ int main() {
             .printer.mesh_x_max = 205.0,
             .printer.mesh_y_min = 12.0,
             .printer.mesh_y_max = 205.0,
+//            .printer.head_offset_x = -48.4,
+//            .printer.head_offset_y = -12.8,
     };
     state.status_message[0] = '\0';
 

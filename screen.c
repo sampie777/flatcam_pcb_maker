@@ -304,7 +304,7 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, ",");
     draw_text_field_double(screen_buffer, NULL, state->printer.measure0.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_Y);
     bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure0.z, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_Z);
+    draw_text_field_double(screen_buffer, NULL, state->printer.measure0.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_Z);
     bufferAppend(screen_buffer, ")");
 
     bufferAppend(screen_buffer, NEW_LINE);
@@ -313,7 +313,7 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, ",");
     draw_text_field_double(screen_buffer, NULL, state->printer.measure1.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_Y);
     bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure1.z, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_Z);
+    draw_text_field_double(screen_buffer, NULL, state->printer.measure1.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_Z);
     bufferAppend(screen_buffer, ")");
 
     bufferAppend(screen_buffer, NEW_LINE);
@@ -322,7 +322,7 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, ",");
     draw_text_field_double(screen_buffer, NULL, state->printer.measure2.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_Y);
     bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure2.z, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_Z);
+    draw_text_field_double(screen_buffer, NULL, state->printer.measure2.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_Z);
     bufferAppend(screen_buffer, ")");
 
     bufferAppend(screen_buffer, NEW_LINE);

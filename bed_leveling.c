@@ -18,9 +18,9 @@ void bed_leveling_calculate_printer_leveling_points(const Plane3D *plane,
     }
 
     for (int row = 0; row < mesh_size; row++) {
-        double y = mesh_y_min + row * (mesh_y_max - mesh_y_min);
+        double y = mesh_y_min + ((double) row / mesh_size) * (mesh_y_max - mesh_y_min);
         for (int col = 0; col < mesh_size; col++) {
-            double x = mesh_x_min + col * (mesh_x_max - mesh_x_min);
+            double x = mesh_x_min + ((double) col / mesh_size) * (mesh_x_max - mesh_x_min);
             // Calculate z by:
             // ax + by + cz + d = 0  ->  z = -(ax + by + d) / c
             (*level_points)[row][col] = (Point3D) {

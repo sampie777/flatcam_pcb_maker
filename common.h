@@ -201,6 +201,8 @@ typedef struct {
     double mesh_y_min;
     double mesh_y_max;
     Plane3D plane;
+//    double head_offset_x;
+//    double head_offset_y;
 } PrinterSettings;
 
 typedef struct {
