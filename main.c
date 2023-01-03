@@ -19,6 +19,7 @@
 #include "eagle_board_parser.h"
 #include "return_codes.h"
 #include "gnd_pads.h"
+#include "bed_leveling.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -45,6 +46,9 @@ void selection_increase(AppState *state, int value) {
             break;
         case SCREEN_SHOW_CHECKLIST:
             state->checklist_selection += value;
+            break;
+        case SCREEN_PRINTER_LEVELING:
+            state->printer_leveling_selection += value;
             break;
         default:
             break;
@@ -143,8 +147,14 @@ void confirm_selection(AppState *state) {
                     state->checklist_check_position = 0;
                     state->checklist_selection = CHECKLIST_NEXT_CHECK;
                     break;
+                case ACTION_PRINTER_LEVELING:
+                    state->screen = SCREEN_PRINTER_LEVELING;
+                    state->printer_leveling_selection = 0;
+                    break;
                 case ACTION_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_PROJECT;
+                    break;
+                default:
                     break;
             }
             break;
@@ -154,6 +164,43 @@ void confirm_selection(AppState *state) {
                 state->screen = SCREEN_SELECT_ACTION;
             } else {
                 state->checklist_check_position++;
+            }
+            break;
+        }
+        case SCREEN_PRINTER_LEVELING: {
+            switch (state->printer_leveling_selection) {
+                case PRINTER_LEVELING_MEASURE0_INPUT_X:
+                    dialog_show_double_with_callback(state, "Point 0: X", state->printer.measure0.x, &(state->printer.measure0.x), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE0_INPUT_Y:
+                    dialog_show_double_with_callback(state, "Point 0: Y", state->printer.measure0.y, &(state->printer.measure0.y), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE0_INPUT_Z:
+                    dialog_show_double_with_callback(state, "Point 0: Z", state->printer.measure0.z, &(state->printer.measure0.z), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE1_INPUT_X:
+                    dialog_show_double_with_callback(state, "Point 1: X", state->printer.measure1.x, &(state->printer.measure1.x), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE1_INPUT_Y:
+                    dialog_show_double_with_callback(state, "Point 1: Y", state->printer.measure1.y, &(state->printer.measure1.y), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE1_INPUT_Z:
+                    dialog_show_double_with_callback(state, "Point 1: Z", state->printer.measure1.z, &(state->printer.measure1.z), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE2_INPUT_X:
+                    dialog_show_double_with_callback(state, "Point 2: X", state->printer.measure2.x, &(state->printer.measure2.x), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE2_INPUT_Y:
+                    dialog_show_double_with_callback(state, "Point 2: Y", state->printer.measure2.y, &(state->printer.measure2.y), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_MEASURE2_INPUT_Z:
+                    dialog_show_double_with_callback(state, "Point 2: Z", state->printer.measure2.z, &(state->printer.measure2.z), flatcam_screen_dialog_callback, true);
+                    break;
+                case PRINTER_LEVELING_BUTTON_BACK:
+                    state->screen = SCREEN_SELECT_ACTION;
+                    break;
+                default:
+                    break;
             }
             break;
         }
@@ -170,13 +217,13 @@ void confirm_selection(AppState *state) {
                     toggle_char(&(state->flatcam_options.cutout_profile), "YN");
                     break;
                 case FLATCAM_OFFSET_X:
-                    dialog_show_double_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x), flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Offset X", state->flatcam_options.offset_x, &(state->flatcam_options.offset_x), flatcam_screen_dialog_callback, false);
                     break;
                 case FLATCAM_OFFSET_Y:
-                    dialog_show_double_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y), flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Offset Y", state->flatcam_options.offset_y, &(state->flatcam_options.offset_y), flatcam_screen_dialog_callback, false);
                     break;
                 case FLATCAM_DIA_WIDTH:
-                    dialog_show_double_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width), flatcam_screen_dialog_callback);
+                    dialog_show_double_with_callback(state, "Dia width", state->flatcam_options.dia_width, &(state->flatcam_options.dia_width), flatcam_screen_dialog_callback, false);
                     break;
                 case FLATCAM_FEEDRATE:
                     dialog_show_string_with_callback(state, "Feedrate", state->flatcam_options.feedrate_etch, &(state->flatcam_options.feedrate_etch[0]), 7, flatcam_screen_dialog_callback);
@@ -203,6 +250,8 @@ void confirm_selection(AppState *state) {
                 case FLATCAM_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_ACTION;
                     break;
+                default:
+                    break;
             }
             break;
         }
@@ -217,6 +266,8 @@ void confirm_selection(AppState *state) {
                     open_folder(buffer);
                     break;
                 }
+                default:
+                    break;
             }
             break;
     }
@@ -287,6 +338,7 @@ void app_control(AppState *state) {
     state->modify_gcode_selection = bound_int(state->modify_gcode_selection, 0, MODIFY_GCODE_MAX_VALUE - 1, true);
     state->checklist_selection = bound_int(state->checklist_selection, 0, CHECKLIST_MAX_VALUE - 1, true);
     state->checklist_check_position = bound_int(state->checklist_check_position, 0, checklist_length, false);
+    state->printer_leveling_selection = bound_int(state->printer_leveling_selection, 0, PRINTER_LEVELING_MAX_VALUE - 1, true);
     state->dialog_selection = bound_int(state->dialog_selection, 0, (int) strlen(state->dialog.char_options) - 1, true);
     if (strlen(state->dialog.char_options) > 0 && state->dialog.type == 'c') {
         state->dialog.value[0] = state->dialog.char_options[state->dialog_selection];
@@ -307,6 +359,10 @@ void app_control(AppState *state) {
             status_message_start_time = 0;
         }
     }
+
+    if (state->screen == SCREEN_PRINTER_LEVELING) {
+        bed_leveling_calculate(state);
+    }
 }
 
 int main() {
@@ -325,6 +381,11 @@ int main() {
             .flatcam_options.silkscreen_mirror = 'N',
             .eagle_board = NULL,
             .modify_results.messages = NULL,
+            .printer.mesh_size = 4,
+            .printer.mesh_x_min = 12.0,
+            .printer.mesh_x_max = 205.0,
+            .printer.mesh_y_min = 12.0,
+            .printer.mesh_y_max = 205.0,
     };
     state.status_message[0] = '\0';
 

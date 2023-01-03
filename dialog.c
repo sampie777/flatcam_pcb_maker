@@ -32,7 +32,7 @@ void dialog_show_char(AppState *state, const char *title, char default_value, ch
     state->dialog.char_options[0] = '\0';
 }
 
-void dialog_show_double(AppState *state, const char *title, double default_value, double *destination) {
+void dialog_show_double(AppState *state, const char *title, double default_value, double *destination, bool start_empty_if_value_is_zero) {
     state->dialog.show = 1;
     strcpy(state->dialog.title, title);
     sprintf(state->dialog.default_value, "%lf", default_value);
@@ -43,6 +43,10 @@ void dialog_show_double(AppState *state, const char *title, double default_value
     state->dialog.max_length = max(10, strlen(state->dialog.value) + 2);
     state->dialog.type = 'f';
     state->dialog.char_options[0] = '\0';
+
+    if (start_empty_if_value_is_zero && default_value == 0) {
+        state->dialog.value[0] = '\0';
+    }
 }
 
 void dialog_show_int(AppState *state, const char *title, int default_value, int *destination) {
@@ -68,8 +72,8 @@ void dialog_show_char_with_callback(AppState *state, const char *title, char def
     state->dialog.callback = (void (*)(void *)) callback;
 }
 
-void dialog_show_double_with_callback(AppState *state, const char *title, double default_value, double *destination, void (*callback)(AppState *)) {
-    dialog_show_double(state, title, default_value, destination);
+void dialog_show_double_with_callback(AppState *state, const char *title, double default_value, double *destination, void (*callback)(AppState *), bool start_empty_if_value_is_zero) {
+    dialog_show_double(state, title, default_value, destination, start_empty_if_value_is_zero);
     state->dialog.callback = (void (*)(void *)) callback;
 }
 

@@ -36,12 +36,14 @@ enum Screens {
     SCREEN_GENERATE_FLATCAM,
     SCREEN_MODIFY_GCODE,
     SCREEN_SHOW_CHECKLIST,
+    SCREEN_PRINTER_LEVELING,
 };
 
 enum ProjectActions {
     ACTION_GENERATE_FLATCAM_COMMANDS = 0,
     ACTION_MODIFY_GCODE,
     ACTION_SHOW_CHECKLIST,
+    ACTION_PRINTER_LEVELING,
     ACTION_BUTTON_BACK,
     ACTION_MAX_VALUE
 };
@@ -76,6 +78,20 @@ enum ChecklistActions {
     CHECKLIST_MAX_VALUE
 };
 
+enum PrinterLevelingActions {
+    PRINTER_LEVELING_MEASURE0_INPUT_X = 0,
+    PRINTER_LEVELING_MEASURE0_INPUT_Y,
+    PRINTER_LEVELING_MEASURE0_INPUT_Z,
+    PRINTER_LEVELING_MEASURE1_INPUT_X,
+    PRINTER_LEVELING_MEASURE1_INPUT_Y,
+    PRINTER_LEVELING_MEASURE1_INPUT_Z,
+    PRINTER_LEVELING_MEASURE2_INPUT_X,
+    PRINTER_LEVELING_MEASURE2_INPUT_Y,
+    PRINTER_LEVELING_MEASURE2_INPUT_Z,
+    PRINTER_LEVELING_BUTTON_BACK,
+    PRINTER_LEVELING_MAX_VALUE,
+};
+
 typedef struct {
     char traces;
     char mirror;
@@ -100,7 +116,9 @@ typedef struct {
     double *destination_double;
     int *destination_int;
     int max_length;
+
     void (*callback)(void *);
+
     char type;
     char char_options[32];
 } DialogOptions;
@@ -123,7 +141,7 @@ typedef struct {
     PadShape shape;
 } PackagePad;
 
-struct GndPadStruct{
+struct GndPadStruct {
     char *name;
     char *library;
     char *package;
@@ -161,6 +179,31 @@ typedef struct {
 } ModifyGcodeResults;
 
 typedef struct {
+    double x;
+    double y;
+    double z;
+} Point3D;
+
+typedef struct {
+    double a;
+    double b;
+    double c;
+    double d;
+} Plane3D;
+
+typedef struct {
+    Point3D measure0;
+    Point3D measure1;
+    Point3D measure2;
+    int mesh_size;
+    double mesh_x_min;
+    double mesh_x_max;
+    double mesh_y_min;
+    double mesh_y_max;
+    Plane3D plane;
+} PrinterSettings;
+
+typedef struct {
     int row_count;
     int column_count;
     enum Screens screen;
@@ -176,12 +219,14 @@ typedef struct {
     int dialog_selection;
     enum ChecklistActions checklist_selection;
     int checklist_check_position;
+    enum PrinterLevelingActions printer_leveling_selection;
 
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
     char status_message[256];
     EagleBoardProject *eagle_board;
     ModifyGcodeResults modify_results;
+    PrinterSettings printer;
 } AppState;
 
 typedef struct {
