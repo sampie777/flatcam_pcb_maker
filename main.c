@@ -332,6 +332,20 @@ void editorProcessKeypress(AppState *state) {
                 if (length > 0) {
                     state->dialog.value[length - 1] = '\0';
                 }
+            } else {
+                switch (state->screen) {
+                    case SCREEN_SELECT_ACTION:
+                        state->screen = SCREEN_SELECT_PROJECT;
+                        break;
+                    case SCREEN_GENERATE_FLATCAM:
+                    case SCREEN_MODIFY_GCODE:
+                    case SCREEN_SHOW_CHECKLIST:
+                    case SCREEN_PRINTER_LEVELING:
+                        state->screen = SCREEN_SELECT_ACTION;
+                        break;
+                    default:
+                        break;
+                }
             }
             break;
         case CTRL_KEY('h'):
