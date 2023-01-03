@@ -98,9 +98,22 @@ void on_project_selected(AppState *state) {
 
     free_eagle_board(state);
     eagle_profile_parse(state);
-    if (eagle_job_parse(state) != RESULT_OK) return;
-    if (eagle_board_parse(state) != RESULT_OK) return;
-    merge_connected_gnd_pads(state);
+    if (eagle_job_parse(state) == RESULT_OK) {
+        if (eagle_board_parse(state) == RESULT_OK) {
+            merge_connected_gnd_pads(state);
+        }
+    }
+
+    // Prefill measure points as a suggestion
+    state->printer.measure0.x = state->flatcam_options.offset_x + 1;
+    state->printer.measure0.y = state->flatcam_options.offset_y + 2;
+    state->printer.measure1.y = state->printer.measure0.y;
+
+    if (state->eagle_board != NULL) {
+        state->printer.measure1.x = state->flatcam_options.offset_x + state->eagle_board->width;
+        state->printer.measure2.x = state->flatcam_options.offset_x + state->eagle_board->width;
+        state->printer.measure2.y = state->flatcam_options.offset_y + state->eagle_board->height;
+    }
 }
 
 void toggle_char(char *source, char *selection) {
