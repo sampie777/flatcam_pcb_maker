@@ -350,6 +350,7 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
                                                    state->printer.mesh_y_max,
                                                    &level_points);
 
+    // Create column headers
     bufferAppend(screen_buffer, SCREEN_COLOR_CYAN);
     sprintf(buffer, "%7s  ", "Y/X");
     bufferAppend(screen_buffer, buffer);
@@ -361,14 +362,26 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, NEW_LINE);
 
     for (int row = state->printer.mesh_size - 1; row >= 0; row--) {
+        // Create row headers
         bufferAppend(screen_buffer, SCREEN_COLOR_CYAN);
         sprintf(buffer, "%7.1lf  ", level_points[row][0].y);
         bufferAppend(screen_buffer, buffer);
         bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
+
+        // Display matrix values
         for (int col = 0; col < state->printer.mesh_size; col++) {
             Point3D *point = &(level_points[row][col]);
+
+            // Color the position of the PCB in the matrix
+            if (state->eagle_board != NULL
+                && point->x < state->flatcam_options.offset_x + state->eagle_board->width
+                && point->y < state->flatcam_options.offset_y + state->eagle_board->height) {
+                bufferAppend(screen_buffer, SCREEN_COLOR_YELLOW);
+            }
+
             sprintf(buffer, "%9.2lf", point->z);
             bufferAppend(screen_buffer, buffer);
+            bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
         }
         bufferAppend(screen_buffer, NEW_LINE);
     }
