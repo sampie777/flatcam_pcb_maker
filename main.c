@@ -284,13 +284,34 @@ void editorProcessKeypress(AppState *state) {
             clearScreen();
             exit(0);
         case ARROW_UP:
-            selection_increase(state, -1);
+            if (state->screen == SCREEN_PRINTER_LEVELING) {
+                if (state->printer_leveling_selection >= PRINTER_LEVELING_MEASURE0_INPUT_X && state->printer_leveling_selection <= PRINTER_LEVELING_MEASURE0_INPUT_Z) {
+                    state->printer_leveling_selection = -1;
+                } else {
+                    selection_increase(state, -3);
+                }
+            } else {
+                selection_increase(state, -1);
+            }
             break;
         case ARROW_LEFT:
+            selection_increase(state, -1);
+            break;
         case ARROW_DOWN:
-            selection_increase(state, 1);
+            if (state->screen == SCREEN_PRINTER_LEVELING) {
+                if (state->printer_leveling_selection >= PRINTER_LEVELING_MEASURE2_INPUT_X && state->printer_leveling_selection <= PRINTER_LEVELING_MEASURE2_INPUT_Z) {
+                    state->printer_leveling_selection = PRINTER_LEVELING_BUTTON_BACK;
+                } else if (state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK) {
+                    state->printer_leveling_selection++;
+                } else {
+                    selection_increase(state, 3);
+                }
+            } else {
+                selection_increase(state, 1);
+            }
             break;
         case ARROW_RIGHT:
+            selection_increase(state, 1);
             break;
         case BACKSPACE:
             if (state->dialog.show) {
