@@ -60,12 +60,12 @@ void generate_settings_comment(AppState *state, char **out) {
     *out = malloc(1024);
     sprintf(*out,
             SETTINGS_COMMENT_START" file=%s\n"
-            SETTINGS_COMMENT_START" width=%lf\n"
-            SETTINGS_COMMENT_START" height=%lf\n"
-            SETTINGS_COMMENT_START" min_x=%lf\n"
-            SETTINGS_COMMENT_START" min_y=%lf\n"
-            SETTINGS_COMMENT_START" max_x=%lf\n"
-            SETTINGS_COMMENT_START" max_y=%lf\n"
+            SETTINGS_COMMENT_START" width=%.4lf\n"
+            SETTINGS_COMMENT_START" height=%.4lf\n"
+            SETTINGS_COMMENT_START" min_x=%.4lf\n"
+            SETTINGS_COMMENT_START" min_y=%.4lf\n"
+            SETTINGS_COMMENT_START" max_x=%.4lf\n"
+            SETTINGS_COMMENT_START" max_y=%.4lf\n"
             SETTINGS_COMMENT_START" traces=%c\n"
             SETTINGS_COMMENT_START" mirror=%c\n"
             SETTINGS_COMMENT_START" cutout_profile=%c\n"

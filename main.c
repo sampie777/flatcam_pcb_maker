@@ -419,7 +419,7 @@ int main() {
             .flatcam_options.mirror = 'Y',
             .flatcam_options.cutout_profile = 'Y',
             .flatcam_options.offset_x = 12,
-            .flatcam_options.offset_y = 16,
+            .flatcam_options.offset_y = 17.5,
             .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = 8,

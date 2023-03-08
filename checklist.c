@@ -6,7 +6,7 @@
 
 const char *checklist_checks[] = {
         "-- Computer --",
-        "Export EAGLE files",
+        "Export EAGLE files (disable Cutouts in Profile)",
         "Run FlatCAM scripts",
         "Modify GCode files",
         "-- Preparation --",
