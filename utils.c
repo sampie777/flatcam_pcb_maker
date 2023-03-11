@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
 #include <windows.h>
@@ -150,4 +151,22 @@ void auto_format_double_string(char *input) {
     }
 
     strcpy(input, output);
+}
+
+double distance_between_points(double x1, double y1, double x2, double y2) {
+    double diff_x = x1 - x2;
+    double diff_y = y1 - y2;
+    return sqrt(diff_x * diff_x + diff_y * diff_y);
+}
+
+double distance_between_3d_points(const Point3D *a, const Point3D *b) {
+    return distance_between_points(a->x, a->y, b->x, b->y);
+}
+
+double vector_dot(const Point2D *a, const Point2D *b) {
+    return a->x * b->x + a->y * b->y;
+}
+
+double vector_len(const Point2D *a) {
+    return sqrt(vector_dot(a, a));
 }

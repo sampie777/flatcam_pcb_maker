@@ -181,6 +181,11 @@ typedef struct {
 typedef struct {
     double x;
     double y;
+} Point2D;
+
+typedef struct {
+    double x;
+    double y;
     double z;
 } Point3D;
 
@@ -206,6 +211,14 @@ typedef struct {
 } PrinterSettings;
 
 typedef struct {
+    int column_length;
+    int row_length;
+    int center_points_length;
+    Point3D **measurements;
+    Point3D *center_points;
+} Leveling;
+
+typedef struct {
     int row_count;
     int column_count;
     enum Screens screen;
@@ -229,6 +242,7 @@ typedef struct {
     EagleBoardProject *eagle_board;
     ModifyGcodeResults modify_results;
     PrinterSettings printer;
+    Leveling leveling;
 } AppState;
 
 typedef struct {
