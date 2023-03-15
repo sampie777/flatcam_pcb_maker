@@ -13,12 +13,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
-#define SCREEN_COLOR_RED "\x1b[31m"
-#define SCREEN_COLOR_GREEN "\x1b[32m"
-#define SCREEN_COLOR_CYAN "\x1b[36m"
-#define SCREEN_COLOR_RESET "\x1b[39m"
-
 void leveling_calculate_plane(const Point3D *point1,
                               const Point3D *point2,
                               const Point3D *point3,
@@ -175,13 +169,13 @@ void find_nearest_points_for_point(const Leveling *leveling, const Point3D *poin
         Point3D *current_point = &(leveling->center_points[i]);
 //        add_1_point_if_closer_to_1_point(point, current_point, point3);
         // Next doesn't seem to do anything different
-        // todo: first get one|two points closest to `point1` and `point2`.
+        // first get one|two points closest to `point1` and `point2`.
         add_2_points_if_closer_to_2_points(*point1, *point2, current_point, &center_point1, &center_point2);
 //        find_point_closest_to_3(point, *point1, *point2, current_point, point3);
     }
     find_point_closest_to_3(point, *point1, *point2, center_point1, point3);
     find_point_closest_to_3(point, *point1, *point2, center_point2, point3);
-    // todo: Then take the point closest to `point` of these one|two points.
+    // Then take the point closest to `point` of these one|two points.
 //    if (center_point1 == NULL) return;
 //    add_1_point_if_closer_to_1_point(point, center_point1, point3);
 //    if (center_point2 == NULL) return;
@@ -197,123 +191,8 @@ double get_nearest_known_measurements_height_for_point(const Leveling *leveling,
         }
     }
     for (int i = 0; i < leveling->center_points_length; i++) {
-        Point3D *current_point = &(leveling->center_points[i]);
+//        Point3D *current_point = &(leveling->center_points[i]);
 //        add_1_point_if_closer_to_1_point(point, current_point, &measurement_point);
     }
     return measurement_point->z;
-}
-
-void factor_to_height_color(double factor, char *r, char *g, char *b) {
-    *r = (char)(255 * sin(factor * 0.5 * M_PI));
-    *g = (char)(255 * cos(factor * 0.5 * M_PI));
-    *b = 0;
-}
-
-void create_bitmap(Leveling *leveling) {
-    printf("\n"SCREEN_COLOR_CYAN"Generating image..."SCREEN_COLOR_RESET"\n");
-
-    int offsetX = 2;
-    int offsetY = 2;
-
-    int min_x = 9999;
-    int max_x = -9999;
-    int min_y = 9999;
-    int max_y = -9999;
-    for (int i = 0; i < leveling->row_length; i++) {
-        for (int j = 0; j < leveling->column_length; j++) {
-            Point3D *point = &(leveling->measurements[i][j]);
-            if (point->x < min_x) min_x = (int) point->x;
-            if (point->x > max_x) max_x = (int) point->x;
-            if (point->y < min_y) min_y = (int) point->y;
-            if (point->y > max_y) max_y = (int) point->y;
-        }
-    }
-
-    BitMap bitmap = {
-            .width = (max_x - min_x) + 2 * offsetX + 1 + 2,
-            .height = (max_y - min_y) + 2 * offsetY + 1,
-            .scale = 10,
-    };
-    bitmap_malloc(&bitmap);
-
-    Point3D point = {0};
-    double max = -9999;
-    double min = 9999;
-    for (int i = 0; i < bitmap.height; i++) {
-        for (int j = 0; j < bitmap.width; j++) {
-            point.x = min_x + j - offsetX;
-            point.y = min_y + i - offsetY;
-            double result = leveling_calculate_height_for_point(leveling, &point);
-            if (result > max) max = result;
-            if (result < min) min = result;
-        }
-    }
-
-    for (int i = 0; i < bitmap.height; i++) {
-        for (int j = 0; j < bitmap.width; j++) {
-            char *r = &(bitmap.data[i][j][0]);
-            char *g = &(bitmap.data[i][j][1]);
-            char *b = &(bitmap.data[i][j][2]);
-
-            // Draw spectrum
-            if (j == bitmap.width - 2) {
-                *r = 0;
-                *g = 0;
-                *b = 0;
-                continue;
-            } else if (j == bitmap.width - 1) {
-                double factor = (double) i / bitmap.height;
-                factor_to_height_color(factor, r, g, b);
-                continue;
-            }
-
-            point.x = min_x + j - offsetX;
-            point.y = min_y + i - offsetY;
-
-            bool pixel_calculated = false;
-            for (int row = 0; row < leveling->row_length; row++) {
-                for (int col = 0; col < leveling->column_length; col++) {
-                    Point3D *current_point = &(leveling->measurements[row][col]);
-                    if (current_point->x == point.x && current_point->y == point.y) {
-                        if (row == 0 && col == 0) {
-                            r = 0;
-                            g = 0;
-                            b = 0;
-                            pixel_calculated = true;
-                        } else {
-                            *r = (char) 255;
-                            *g = (char) 255;
-                            *b = (char) 255;
-                            pixel_calculated = true;
-                        }
-                    }
-                }
-            }
-
-            if (pixel_calculated) continue;
-
-            for (int c = 0; c < leveling->center_points_length; c++) {
-                Point3D *current_point = &(leveling->center_points[c]);
-                if (round(current_point->x) == round(point.x) && round(current_point->y) == round(point.y)) {
-                    double factor = (current_point->z - min) / (max - min);
-                    factor_to_height_color(factor, r, g, b);
-                    *b = 110;
-                    pixel_calculated = true;
-                }
-            }
-
-            if (pixel_calculated) continue;
-
-//            double height = leveling_calculate_height_for_point(leveling, &point);
-            double height = gaussian_blur_5x5_point(leveling, &point);
-//            double height = get_nearest_known_measurements_height_for_point(leveling, &point);
-
-            double factor = (height - min) / (max - min);
-
-            factor_to_height_color(factor, r, g, b);
-        }
-    }
-
-    bitmap_save(&bitmap, "img.bmp");
-    free(bitmap.data);
 }
