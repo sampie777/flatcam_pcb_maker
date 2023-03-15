@@ -9,6 +9,6 @@
 
 void create_bitmap(Leveling *leveling);
 
-void create_terminal_image(Leveling *leveling, int width);
+void create_terminal_image(Leveling *leveling, int width, char **output);
 
 #endif //FLATCAM_PCB_MAKER_HEIGHTMAP_IMAGE_H

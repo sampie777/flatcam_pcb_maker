@@ -79,15 +79,11 @@ enum ChecklistActions {
 };
 
 enum PrinterLevelingActions {
-    PRINTER_LEVELING_MEASURE0_INPUT_X = 0,
-    PRINTER_LEVELING_MEASURE0_INPUT_Y,
-    PRINTER_LEVELING_MEASURE0_INPUT_Z,
-    PRINTER_LEVELING_MEASURE1_INPUT_X,
-    PRINTER_LEVELING_MEASURE1_INPUT_Y,
-    PRINTER_LEVELING_MEASURE1_INPUT_Z,
-    PRINTER_LEVELING_MEASURE2_INPUT_X,
-    PRINTER_LEVELING_MEASURE2_INPUT_Y,
-    PRINTER_LEVELING_MEASURE2_INPUT_Z,
+    PRINTER_LEVELING_REMOVE_COLUMN,
+    PRINTER_LEVELING_ADD_COLUMN,
+    PRINTER_LEVELING_REMOVE_ROW,
+    PRINTER_LEVELING_ADD_ROW,
+    PRINTER_LEVELING_SELECTION_Z,
     PRINTER_LEVELING_BUTTON_BACK,
     PRINTER_LEVELING_MAX_VALUE,
 };
@@ -211,11 +207,10 @@ typedef struct {
 } PrinterSettings;
 
 typedef struct {
+    double min_distance_between_measurement_points_mm;
     int column_length;
     int row_length;
-    int center_points_length;
     Point3D **measurements;
-    Point3D *center_points;
 } Leveling;
 
 typedef struct {
@@ -235,6 +230,7 @@ typedef struct {
     enum ChecklistActions checklist_selection;
     int checklist_check_position;
     enum PrinterLevelingActions printer_leveling_selection;
+    int printer_leveling_measurement_selected_index;
 
     FlatcamOptions flatcam_options;
     DialogOptions dialog;

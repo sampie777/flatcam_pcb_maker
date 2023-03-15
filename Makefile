@@ -1,2 +1,2 @@
 flatcam_pcb_maker: main.c
-	$(CC) main.c terminal_utils.c screen.c file_utils.c utils.c dialog.c flatcam_generator.c gcode_modifier.c checklist.c gnd_pads.c eagle_board_parser.c bed_leveling.c -Wall -pedantic -std=c99 -D_BSD_SOURCE -o flatcam_pcb_maker.exe -lm
+	$(CC) main.c terminal_utils.c screen.c file_utils.c utils.c dialog.c flatcam_generator.c gcode_modifier.c checklist.c eagle_board_parser.c gnd_pads.c leveling/leveling_utils.c leveling/bed_leveling.c bitmap.c leveling/height_calculation.c leveling/heightmap_image.c -Wall -pedantic -std=c99 -D_BSD_SOURCE -o flatcam_pcb_maker.exe -lm

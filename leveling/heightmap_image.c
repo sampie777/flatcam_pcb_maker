@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 #include "heightmap_image.h"
 #include "height_calculation.h"
 #include "../screen.h"
@@ -120,19 +121,6 @@ void create_bitmap(Leveling *leveling) {
 
             if (pixel_calculated) continue;
 
-            // Color center points
-            for (int c = 0; c < leveling->center_points_length; c++) {
-                Point3D *current_point = &(leveling->center_points[c]);
-                if (round(current_point->x) == round(point.x) && round(current_point->y) == round(point.y)) {
-                    double factor = (current_point->z - minZ) / (maxZ - minZ);
-                    factor_to_height_color(factor, r, g, b);
-                    *b = 110;
-                    pixel_calculated = true;
-                }
-            }
-
-            if (pixel_calculated) continue;
-
             // Color approximate pixel height
             double height = get_height_for_point(leveling, &point);
             double factor = (height - minZ) / (maxZ - minZ);
@@ -165,7 +153,9 @@ char height_factor_to_static_color(double height_factor) {
     }
 }
 
-void create_terminal_image(Leveling *leveling, int width) {
+void create_terminal_image(Leveling *leveling, int width, char **output) {
+    if (leveling->row_length <= 1 || leveling->column_length <= 1) return;
+
     // Get minZ/maxZ X and Y points
     int min_x = 9999;
     int max_x = -9999;
@@ -183,6 +173,8 @@ void create_terminal_image(Leveling *leveling, int width) {
     int board_width = max_x - min_x;
     int board_height = max_y - min_y;
 
+    if (board_width == 0 || board_height == 0) return;
+
     // Get the minZ/maxZ Z
     Point3D point = {0};
     double max = -9999;
@@ -199,22 +191,19 @@ void create_terminal_image(Leveling *leveling, int width) {
 
     int canvas_width = width;
     int canvas_height = (int) (0.37 * board_height * ((double) canvas_width / board_width));
-    char **output = malloc(canvas_height * sizeof(char *));
-    for (int i = 0; i < canvas_height; i++) {
-        output[i] = malloc(canvas_width * sizeof(char));
-    }
 
-
-    for (int i = canvas_height - 1; i >= 0; i--) {
-        for (int j = 0; j < canvas_width; j++) {
-            char *pixel = &(output[i][j]);
-
+    *output = malloc((canvas_width + 1 + 2) * 8 * (canvas_height + 1) * sizeof(char) + canvas_height * sizeof(char));
+    *output[0] = '\0';
+    char buffer[32];
+    for (int i = canvas_height; i >= 0; i--) {
+        strcat(*output, " ");
+        for (int j = 0; j < canvas_width + 1; j++) {
             point.x = min_x + board_width * ((double) j / canvas_width);
             point.y = min_y + board_height * ((double) i / canvas_height);
 
             double height = get_height_for_point(leveling, &point);
-            double factor = (height - min) / (max - min);
-            *pixel = height_factor_to_static_color(factor);
+            double factor = (max - min) == 0 ? 0 : (height - min) / (max - min);
+            char pixel = height_factor_to_static_color(factor);
 
             bool solid = false;
             for (int r = 0; r < leveling->row_length; r++) {
@@ -229,13 +218,9 @@ void create_terminal_image(Leveling *leveling, int width) {
                 }
             }
 
-            printf("\x1b[3%dm%s", *pixel, solid ? "█" : "▓");
+            sprintf(buffer, "\x1b[3%dm%s", pixel, solid ? "█" : "▓");
+            strcat(*output, buffer);
         }
-        printf(SCREEN_COLOR_RESET"\n");
+        strcat(*output, SCREEN_COLOR_RESET""NEW_LINE);
     }
-
-    for (int i = 0; i < canvas_height; i++) {
-        free(output[i]);
-    }
-    free(output);
 }

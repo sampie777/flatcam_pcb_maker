@@ -11,9 +11,7 @@
 #include "utils.h"
 #include "checklist.h"
 #include "app_version.h"
-#include "bed_leveling.h"
-
-#define NEW_LINE "\r\n\x1b[K"
+#include "leveling/heightmap_image.h"
 
 void bufferAppend(ScreenBuffer *screen_buffer, const char *s) {
     int len = strlen(s);
@@ -79,7 +77,6 @@ void draw_button(ScreenBuffer *screen_buffer, const char *title, bool highlight)
     if (highlight) {
         enable_highlight(screen_buffer, false);
     }
-    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_text_field_string(ScreenBuffer *screen_buffer, const char *title, const char *value, bool highlight) {
@@ -173,6 +170,7 @@ void draw_select_project_screen(AppState *state, ScreenBuffer *screen_buffer) {
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Quit", state->project_selection == state->projects_count);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
@@ -196,6 +194,7 @@ void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->action_selection == ACTION_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) {
@@ -242,7 +241,9 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Generate", state->flatcam_option_selection == FLATCAM_BUTTON_GENERATE);
+    bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->flatcam_option_selection == FLATCAM_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_modify_gcode_screen(AppState *state, ScreenBuffer *screen_buffer) {
@@ -258,7 +259,9 @@ void draw_modify_gcode_screen(AppState *state, ScreenBuffer *screen_buffer) {
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Show files", state->modify_gcode_selection == MODIFY_GCODE_OPEN_FILES);
+    bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->modify_gcode_selection == MODIFY_GCODE_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
@@ -289,110 +292,67 @@ void draw_show_checklist_screen(AppState *state, ScreenBuffer *screen_buffer) {
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->checklist_selection == CHECKLIST_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buffer) {
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "PRINTER MESH LEVELING");
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, NEW_LINE);
-
-    bufferAppend(screen_buffer, "Insert three different points of measure (x, y, z).");
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "  Point 1:  (");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure0.x, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_X);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure0.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_Y);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure0.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE0_INPUT_Z);
-    bufferAppend(screen_buffer, ")");
-
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "  Point 2:  (");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure1.x, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_X);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure1.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_Y);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure1.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE1_INPUT_Z);
-    bufferAppend(screen_buffer, ")");
-
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "  Point 3:  (");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure2.x, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_X);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure2.y, "%.1lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_Y);
-    bufferAppend(screen_buffer, ",");
-    draw_text_field_double(screen_buffer, NULL, state->printer.measure2.z, "%.2lf", state->printer_leveling_selection == PRINTER_LEVELING_MEASURE2_INPUT_Z);
-    bufferAppend(screen_buffer, ")");
-
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, "Resulting plane: ");
-    bufferAppend(screen_buffer, NEW_LINE);
     char buffer[256];
-    sprintf(buffer, "    %.1lfx + %.1lfy + %.1lfz + %.1lf = 0",
-            state->printer.plane.a,
-            state->printer.plane.b,
-            state->printer.plane.c,
-            state->printer.plane.d
-    );
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, "PCB LEVELING");
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    bufferAppend(screen_buffer, "Columns:  ");
+    sprintf(buffer, "  %2d   ", state->leveling.column_length);
+    bufferAppend(screen_buffer, buffer);
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    bufferAppend(screen_buffer, "Rows:     ");
+    sprintf(buffer, "  %2d   ", state->leveling.row_length);
     bufferAppend(screen_buffer, buffer);
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
-
-    Point3D **level_points = NULL;
-    bed_leveling_calculate_printer_leveling_points(&(state->printer.plane),
-                                                   state->printer.mesh_size,
-                                                   state->printer.mesh_x_min,
-                                                   state->printer.mesh_x_max,
-                                                   state->printer.mesh_y_min,
-                                                   state->printer.mesh_y_max,
-                                                   &level_points);
-
-    // Create column headers
-    bufferAppend(screen_buffer, SCREEN_COLOR_CYAN);
-    sprintf(buffer, "%7s  ", "Y/X");
-    bufferAppend(screen_buffer, buffer);
-    for (int col = 0; col < state->printer.mesh_size; col++) {
-        sprintf(buffer, "%9.1lf", level_points[0][col].x);
-        bufferAppend(screen_buffer, buffer);
-    }
-    bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
-    bufferAppend(screen_buffer, NEW_LINE);
-
-    for (int row = state->printer.mesh_size - 1; row >= 0; row--) {
-        // Create row headers
-        bufferAppend(screen_buffer, SCREEN_COLOR_CYAN);
-        sprintf(buffer, "%7.1lf  ", level_points[row][0].y);
-        bufferAppend(screen_buffer, buffer);
-        bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
-
-        // Display matrix values
-        for (int col = 0; col < state->printer.mesh_size; col++) {
-            Point3D *point = &(level_points[row][col]);
-
-            // Color the position of the PCB in the matrix
-            if (state->eagle_board != NULL
-                && point->x < state->flatcam_options.offset_x + state->eagle_board->width
-                && point->y < state->flatcam_options.offset_y + state->eagle_board->height) {
-                bufferAppend(screen_buffer, SCREEN_COLOR_YELLOW);
-            }
-
-            sprintf(buffer, "%9.2lf", point->z);
+    if (state->leveling.column_length > 0 && state->leveling.row_length > 0) {
+        bufferAppend(screen_buffer, SCREEN_COLOR_YELLOW" Y/X "SCREEN_COLOR_RESET);
+        Point3D *current_point;
+        for (int j = 0; j < state->leveling.column_length; j++) {
+            current_point = &(state->leveling.measurements[0][j]);
+            sprintf(buffer, SCREEN_COLOR_YELLOW" %5.1lf"SCREEN_COLOR_RESET, current_point->x);
             bufferAppend(screen_buffer, buffer);
-            bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
         }
         bufferAppend(screen_buffer, NEW_LINE);
-    }
 
-    for (int i = 0; i < state->printer.mesh_size; i++) {
-        free(level_points[i]);
+        for (int i = state->leveling.row_length - 1; i >= 0; i--) {
+            current_point = &(state->leveling.measurements[i][0]);
+            sprintf(buffer, SCREEN_COLOR_YELLOW"%5.1lf "SCREEN_COLOR_RESET, current_point->y);
+            bufferAppend(screen_buffer, buffer);
+
+            for (int j = 0; j < state->leveling.column_length; j++) {
+                current_point = &(state->leveling.measurements[i][j]);
+                draw_text_field_double(screen_buffer, NULL,
+                                       current_point->z, "%4.2lf",
+                                       state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z
+                                       && state->printer_leveling_measurement_selected_index == (state->leveling.row_length - i - 1) * state->leveling.column_length + j);
+            }
+            bufferAppend(screen_buffer, NEW_LINE);
+        }
     }
-    free(level_points);
 
     bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    if (state->leveling.column_length == 0 || state->leveling.row_length == 0) return;
+
+    char *terminal_image = NULL;
+    create_terminal_image(&(state->leveling), min(50, state->column_count - 3), &terminal_image);
+
+    if (terminal_image == NULL) return;
+    bufferAppend(screen_buffer, terminal_image);
+    free(terminal_image);
+    bufferAppend(screen_buffer, NEW_LINE);
 }
 
 void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
@@ -406,7 +366,7 @@ void draw_dialog(AppState *state, ScreenBuffer *screen_buffer) {
     if (strlen(state->dialog.char_options) == 0) {
         bufferAppend(screen_buffer, "  ");
         enable_highlight(screen_buffer, true);
-        char buffer2[256];
+        char buffer2[250];
         sprintf(buffer2, "%s%s", state->dialog.value, strlen(state->dialog.value) < state->dialog.max_length ? "_" : "");
         sprintf(buffer, " %-*s ", state->dialog.max_length, buffer2);
         bufferAppend(screen_buffer, buffer);
