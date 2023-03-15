@@ -8,3 +8,4 @@ test.txt
 flatcam_pcb_maker.exe
 local_settings.h
 tempfile
+*.bmp

@@ -7,8 +7,8 @@
 
 #include "../common.h"
 
-void create_bitmap(Leveling *leveling);
+void leveling_create_bitmap(Leveling *leveling, const char *filename);
 
-void create_terminal_image(Leveling *leveling, int width, char **output);
+void leveling_create_terminal_image(Leveling *leveling, int width, char **output);
 
 #endif //FLATCAM_PCB_MAKER_HEIGHTMAP_IMAGE_H

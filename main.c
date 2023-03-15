@@ -20,6 +20,7 @@
 #include "return_codes.h"
 #include "gnd_pads.h"
 #include "leveling/bed_leveling.h"
+#include "leveling/heightmap_image.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -33,6 +34,9 @@ void selection_increase(AppState *state, int value) {
             break;
         case SCREEN_SELECT_ACTION:
             state->action_selection += value;
+            if (state->eagle_board == NULL && state->action_selection == ACTION_PRINTER_LEVELING) {
+                state->action_selection += value;
+            }
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection += value;
@@ -193,9 +197,15 @@ void confirm_selection(AppState *state) {
                 case PRINTER_LEVELING_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_ACTION;
                     break;
+                case PRINTER_LEVELING_BUTTON_SAVE_IMAGE: {
+                    char buffer[256];
+                    sprintf(buffer, "%s.bmp", state->project);
+                    leveling_create_bitmap(&(state->leveling), buffer);
+                }
+                    break;
                 case PRINTER_LEVELING_SELECTION_Z: {
-                    int row = state->printer_leveling_measurement_selected_index / state->leveling.row_length;
-                    int column = state->printer_leveling_measurement_selected_index - row * state->leveling.row_length;
+                    int row = state->printer_leveling_measurement_selected_index / state->leveling.column_length;
+                    int column = state->printer_leveling_measurement_selected_index - row * state->leveling.column_length;
                     Point3D *point = &(state->leveling.measurements[state->leveling.row_length - row - 1][column]);
 
                     char buffer[32];
@@ -296,8 +306,7 @@ void editorProcessKeypress(AppState *state) {
                         state->printer_leveling_measurement_selected_index -= state->leveling.column_length;
                     }
                 } else {
-                    if (state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK
-                        && state->printer_leveling_measurement_selected_index < state->leveling.column_length) {
+                    if (state->printer_leveling_measurement_selected_index < state->leveling.column_length) {
                         state->printer_leveling_measurement_selected_index += (state->leveling.row_length - 1) * state->leveling.column_length;
                     }
                     selection_increase(state, -1);
@@ -320,14 +329,13 @@ void editorProcessKeypress(AppState *state) {
         case ARROW_DOWN:
             if (state->screen == SCREEN_PRINTER_LEVELING) {
                 if (state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z) {
-                    if (state->printer_leveling_measurement_selected_index >= (state->leveling.row_length * (state->leveling.column_length - 1))) {
-                        selection_increase(state, 1);
-                    } else {
+                    if (state->printer_leveling_measurement_selected_index < (state->leveling.row_length - 1) * state->leveling.column_length) {
                         state->printer_leveling_measurement_selected_index += state->leveling.column_length;
+                    } else {
+                        selection_increase(state, 1);
                     }
                 } else {
-                    while (state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK
-                           && state->printer_leveling_measurement_selected_index >= state->leveling.column_length) {
+                    while (state->printer_leveling_measurement_selected_index >= state->leveling.column_length) {
                         state->printer_leveling_measurement_selected_index -= (state->leveling.row_length - 1) * state->leveling.column_length;
                     }
                     selection_increase(state, 1);

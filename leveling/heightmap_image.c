@@ -32,7 +32,7 @@ void factor_to_height_color(double factor, char *r, char *g, char *b) {
  * Create and save the heightmap as an image
  * @param leveling
  */
-void create_bitmap(Leveling *leveling) {
+void leveling_create_bitmap(Leveling *leveling, const char *filename) {
     printf("\n"SCREEN_COLOR_CYAN"Generating image..."SCREEN_COLOR_RESET"\n");
 
     // The margin outside of the measurement points
@@ -128,7 +128,7 @@ void create_bitmap(Leveling *leveling) {
         }
     }
 
-    bitmap_save(&bitmap, "img.bmp");
+    bitmap_save(&bitmap, filename);
     free(bitmap.data);
 }
 
@@ -153,7 +153,7 @@ char height_factor_to_static_color(double height_factor) {
     }
 }
 
-void create_terminal_image(Leveling *leveling, int width, char **output) {
+void leveling_create_terminal_image(Leveling *leveling, int width, char **output) {
     if (leveling->row_length <= 1 || leveling->column_length <= 1) return;
 
     // Get minZ/maxZ X and Y points
