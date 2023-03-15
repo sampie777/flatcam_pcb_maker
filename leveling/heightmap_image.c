@@ -143,3 +143,99 @@ void create_bitmap(Leveling *leveling) {
     bitmap_save(&bitmap, "img.bmp");
     free(bitmap.data);
 }
+
+char height_factor_to_static_color(double height_factor) {
+    int factor = (int) (height_factor * 6);
+    switch (factor) {
+        case 0:
+            return 4;   // Blue
+        case 1:
+            return 6;   // Cyan
+        case 2:
+            return 2;   // Green
+        case 3:
+            return 3;   // Yellow
+        case 4:
+            return 1;   // Red
+        case 5:
+        case 6:
+            return 5;   // Purple
+        default:
+            return 9;
+    }
+}
+
+void create_terminal_image(Leveling *leveling, int width) {
+    // Get minZ/maxZ X and Y points
+    int min_x = 9999;
+    int max_x = -9999;
+    int min_y = 9999;
+    int max_y = -9999;
+    for (int i = 0; i < leveling->row_length; i++) {
+        for (int j = 0; j < leveling->column_length; j++) {
+            Point3D *point = &(leveling->measurements[i][j]);
+            if (point->x < min_x) min_x = (int) point->x;
+            if (point->x > max_x) max_x = (int) point->x;
+            if (point->y < min_y) min_y = (int) point->y;
+            if (point->y > max_y) max_y = (int) point->y;
+        }
+    }
+    int board_width = max_x - min_x;
+    int board_height = max_y - min_y;
+
+    // Get the minZ/maxZ Z
+    Point3D point = {0};
+    double max = -9999;
+    double min = 9999;
+    for (int i = 0; i < board_height; i++) {
+        for (int j = 0; j < board_width; j++) {
+            point.x = min_x + j;
+            point.y = min_y + i;
+            double result = get_height_for_point(leveling, &point);
+            if (result > max) max = result;
+            if (result < min) min = result;
+        }
+    }
+
+    int canvas_width = width;
+    int canvas_height = (int) (0.37 * board_height * ((double) canvas_width / board_width));
+    char **output = malloc(canvas_height * sizeof(char *));
+    for (int i = 0; i < canvas_height; i++) {
+        output[i] = malloc(canvas_width * sizeof(char));
+    }
+
+
+    for (int i = canvas_height - 1; i >= 0; i--) {
+        for (int j = 0; j < canvas_width; j++) {
+            char *pixel = &(output[i][j]);
+
+            point.x = min_x + board_width * ((double) j / canvas_width);
+            point.y = min_y + board_height * ((double) i / canvas_height);
+
+            double height = get_height_for_point(leveling, &point);
+            double factor = (height - min) / (max - min);
+            *pixel = height_factor_to_static_color(factor);
+
+            bool solid = false;
+            for (int r = 0; r < leveling->row_length; r++) {
+                for (int c = 0; c < leveling->column_length; c++) {
+                    Point3D *measurement_point = &(leveling->measurements[r][c]);
+                    if (measurement_point->x >= point.x
+                        && measurement_point->x <= min_x + board_width * ((double) (j + 1) / canvas_width)
+                        && measurement_point->y >= point.y
+                        && measurement_point->y <= min_y + board_height * ((double) (i + 1) / canvas_height)) {
+                        solid = true;
+                    }
+                }
+            }
+
+            printf("\x1b[3%dm%s", *pixel, solid ? "█" : "▓");
+        }
+        printf(SCREEN_COLOR_RESET"\n");
+    }
+
+    for (int i = 0; i < canvas_height; i++) {
+        free(output[i]);
+    }
+    free(output);
+}
