@@ -340,8 +340,8 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     }
 
     bufferAppend(screen_buffer, NEW_LINE);
-    bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK);
+    bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (state->leveling.column_length == 0 || state->leveling.row_length == 0) return;
