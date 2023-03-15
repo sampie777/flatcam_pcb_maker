@@ -9,14 +9,10 @@
 #include "height_calculation.h"
 #include "../screen.h"
 #include "../bitmap.h"
-#include "bed_leveling.h"
 
 
 double get_height_for_point(const Leveling *leveling, Point3D *point) {
-//    return leveling_calculate_height_for_point(leveling, point);
-//    return gaussian_blur_5x5_point(leveling, point);
     return bilinear_interpolation(leveling, point);
-//    return  get_nearest_known_measurements_height_for_point(leveling, point);
 }
 
 void factor_to_height_color(double factor, char *r, char *g, char *b) {
@@ -31,12 +27,18 @@ void factor_to_height_color(double factor, char *r, char *g, char *b) {
     }
 }
 
+/**
+ * Create and save the heightmap as an image
+ * @param leveling
+ */
 void create_bitmap(Leveling *leveling) {
     printf("\n"SCREEN_COLOR_CYAN"Generating image..."SCREEN_COLOR_RESET"\n");
 
+    // The margin outside of the measurement points
     int offsetX = 2;
     int offsetY = 2;
 
+    // Get minZ/maxZ X and Y points
     int min_x = 9999;
     int max_x = -9999;
     int min_y = 9999;
@@ -51,6 +53,7 @@ void create_bitmap(Leveling *leveling) {
         }
     }
 
+    // This image we will edit
     BitMap bitmap = {
             .width = (max_x - min_x) + 2 * offsetX + 1 + 2,
             .height = (max_y - min_y) + 2 * offsetY + 1,
@@ -58,26 +61,28 @@ void create_bitmap(Leveling *leveling) {
     };
     bitmap_malloc(&bitmap);
 
+    // Get the minZ/maxZ Z
     Point3D point = {0};
-    double max = -9999;
-    double min = 9999;
+    double maxZ = -9999;
+    double minZ = 9999;
     for (int i = 0; i < bitmap.height; i++) {
         for (int j = 0; j < bitmap.width; j++) {
             point.x = min_x + j - offsetX;
             point.y = min_y + i - offsetY;
             double result = get_height_for_point(leveling, &point);
-            if (result > max) max = result;
-            if (result < min) min = result;
+            if (result > maxZ) maxZ = result;
+            if (result < minZ) minZ = result;
         }
     }
 
+    // Create each pixel for the image
     for (int i = 0; i < bitmap.height; i++) {
         for (int j = 0; j < bitmap.width; j++) {
             char *r = &(bitmap.data[i][j][0]);
             char *g = &(bitmap.data[i][j][1]);
             char *b = &(bitmap.data[i][j][2]);
 
-            // Draw spectrum
+            // Draw spectrum on the right
             if (j == bitmap.width - 2) {
                 *r = 0;
                 *g = 0;
@@ -92,6 +97,7 @@ void create_bitmap(Leveling *leveling) {
             point.x = min_x + j - offsetX;
             point.y = min_y + i - offsetY;
 
+            // Color measurement points
             bool pixel_calculated = false;
             for (int row = 0; row < leveling->row_length; row++) {
                 for (int col = 0; col < leveling->column_length; col++) {
@@ -114,10 +120,11 @@ void create_bitmap(Leveling *leveling) {
 
             if (pixel_calculated) continue;
 
+            // Color center points
             for (int c = 0; c < leveling->center_points_length; c++) {
                 Point3D *current_point = &(leveling->center_points[c]);
                 if (round(current_point->x) == round(point.x) && round(current_point->y) == round(point.y)) {
-                    double factor = (current_point->z - min) / (max - min);
+                    double factor = (current_point->z - minZ) / (maxZ - minZ);
                     factor_to_height_color(factor, r, g, b);
                     *b = 110;
                     pixel_calculated = true;
@@ -126,10 +133,9 @@ void create_bitmap(Leveling *leveling) {
 
             if (pixel_calculated) continue;
 
+            // Color approximate pixel height
             double height = get_height_for_point(leveling, &point);
-
-            double factor = (height - min) / (max - min);
-
+            double factor = (height - minZ) / (maxZ - minZ);
             factor_to_height_color(factor, r, g, b);
         }
     }
