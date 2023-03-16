@@ -203,6 +203,7 @@ int modify_pre_drill_file(AppState *state) {
 
     bool settings_comment_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
     bool end_print_beep_present = false;
 
     char *line = NULL;
@@ -221,12 +222,19 @@ int modify_pre_drill_file(AppState *state) {
         }
 
         if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
             fprintf(temp_file, G_BEEP_END"\n");
             end_print_beep_present = true;
@@ -261,6 +269,7 @@ int modify_drill_file(AppState *state) {
     bool settings_comment_present = false;
     bool pause_print_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
     bool end_print_beep_present = false;
 
     bool removed_a_hole = false;
@@ -279,12 +288,19 @@ int modify_drill_file(AppState *state) {
             continue;
         }
         if (starts_with(line, G_SPINDLE_ON) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         }
         if (starts_with(line, G_SPINDLE_ON) && !pause_print_present) {
             fprintf(temp_file, G_BEEP"\n"
@@ -357,6 +373,7 @@ int modify_check_holes_file(AppState *state) {
 
     bool settings_comment_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
 
     bool removed_a_hole = false;
     char *line = NULL;
@@ -387,12 +404,19 @@ int modify_check_holes_file(AppState *state) {
         }
 
         if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         } else if (strcmp(line, G_USE_MESH) == 0) {
             if (!state->printer.use_bed_leveling_mesh) {
                 continue;
@@ -428,6 +452,7 @@ int modify_check_holes_mirrored_file(AppState *state) {
 
     bool settings_comment_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
 
     bool removed_a_hole = false;
     char *line = NULL;
@@ -458,12 +483,19 @@ int modify_check_holes_mirrored_file(AppState *state) {
         }
 
         if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         } else if (strcmp(line, G_USE_MESH) == 0) {
             if (!state->printer.use_bed_leveling_mesh) {
                 continue;
@@ -495,6 +527,7 @@ int modify_trace_file(AppState *state) {
 
     bool settings_comment_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
     bool end_print_beep_present = false;
     bool has_been_checked_for_gnd_pad = false;
 
@@ -514,12 +547,19 @@ int modify_trace_file(AppState *state) {
         }
 
         if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
             fprintf(temp_file, G_BEEP_END"\n");
             end_print_beep_present = true;
@@ -581,6 +621,7 @@ int modify_silkscreen_file(AppState *state) {
 
     bool settings_comment_present = false;
     bool use_mesh_present = false;
+    bool home_axis_present = false;
     bool end_print_beep_present = false;
 
     char *line = NULL;
@@ -599,12 +640,19 @@ int modify_silkscreen_file(AppState *state) {
         }
 
         if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
-            if (state->printer.use_bed_leveling_mesh) {
-                fprintf(temp_file, G_HOME_AXIS" ; Home axis before we can use mesh\n"G_USE_MESH"\n");
-            } else {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
                 fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
             }
-            use_mesh_present = true;
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
         } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
             fprintf(temp_file, G_BEEP_END"\n");
             end_print_beep_present = true;
