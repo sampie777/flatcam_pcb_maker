@@ -83,7 +83,10 @@ void leveling_calculate_x_and_y_separation_for_measurement_points(AppState *stat
 
     for (int i = 0; i <= max(rows, 1); i++) {
         for (int j = 0; j <= max(cols, 1); j++) {
-            leveling_add_measurement_point(&(state->leveling), j, i, j * width_interval, i * height_interval, 0);
+            leveling_add_measurement_point(&(state->leveling), j, i,
+                                           state->flatcam_options.offset_x + j * width_interval,
+                                           state->flatcam_options.offset_y + i * height_interval,
+                                           0);
         }
     }
 }

@@ -337,14 +337,14 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
         Point3D *current_point;
         for (int j = 0; j < state->leveling.column_length; j++) {
             current_point = &(state->leveling.measurements[0][j]);
-            sprintf(buffer, SCREEN_COLOR_YELLOW" %5.1lf"SCREEN_COLOR_RESET, current_point->x + state->flatcam_options.offset_x);
+            sprintf(buffer, SCREEN_COLOR_YELLOW" %5.1lf"SCREEN_COLOR_RESET, current_point->x);
             bufferAppend(screen_buffer, buffer);
         }
         bufferAppend(screen_buffer, NEW_LINE);
 
         for (int i = state->leveling.row_length - 1; i >= 0; i--) {
             current_point = &(state->leveling.measurements[i][0]);
-            sprintf(buffer, SCREEN_COLOR_YELLOW"%5.1lf "SCREEN_COLOR_RESET, current_point->y + state->flatcam_options.offset_y);
+            sprintf(buffer, SCREEN_COLOR_YELLOW"%5.1lf "SCREEN_COLOR_RESET, current_point->y);
             bufferAppend(screen_buffer, buffer);
 
             for (int j = 0; j < state->leveling.column_length; j++) {
