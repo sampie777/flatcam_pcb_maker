@@ -41,9 +41,9 @@ enum Screens {
 
 enum ProjectActions {
     ACTION_GENERATE_FLATCAM_COMMANDS = 0,
+    ACTION_PRINTER_LEVELING,
     ACTION_MODIFY_GCODE,
     ACTION_SHOW_CHECKLIST,
-    ACTION_PRINTER_LEVELING,
     ACTION_BUTTON_BACK,
     ACTION_MAX_VALUE
 };
@@ -58,6 +58,7 @@ enum FlatcamOptions {
     FLATCAM_FEEDRATE,
     FLATCAM_ITERATIONS,
     FLATCAM_REMOVE_GND_PADS,
+    FLATCAM_USE_PRINTER_BED_MESH,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
@@ -190,17 +191,7 @@ typedef struct {
 } Plane3D;
 
 typedef struct {
-    Point3D measure0;
-    Point3D measure1;
-    Point3D measure2;
-    int mesh_size;
-    double mesh_x_min;
-    double mesh_x_max;
-    double mesh_y_min;
-    double mesh_y_max;
-    Plane3D plane;
-//    double head_offset_x;
-//    double head_offset_y;
+    bool use_bed_leveling_mesh;
 } PrinterSettings;
 
 typedef struct {

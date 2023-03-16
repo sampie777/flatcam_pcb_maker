@@ -114,17 +114,6 @@ void on_project_selected(AppState *state) {
             leveling_calculate_x_and_y_separation_for_measurement_points(state);
         }
     }
-
-    // Prefill measure points as a suggestion
-    state->printer.measure0.x = state->flatcam_options.offset_x + 1;
-    state->printer.measure0.y = state->flatcam_options.offset_y + 2;
-    state->printer.measure1.y = state->printer.measure0.y;
-
-    if (state->eagle_board != NULL) {
-        state->printer.measure1.x = state->flatcam_options.offset_x + state->eagle_board->width;
-        state->printer.measure2.x = state->flatcam_options.offset_x + state->eagle_board->width;
-        state->printer.measure2.y = state->flatcam_options.offset_y + state->eagle_board->height;
-    }
 }
 
 void toggle_char(char *source, char *selection) {
@@ -136,6 +125,10 @@ void toggle_char(char *source, char *selection) {
             *source = selection[i + 1];
         return;
     }
+}
+
+void toggle_bool(bool *source) {
+    *source = !*source;
 }
 
 void confirm_selection(AppState *state) {
@@ -247,6 +240,9 @@ void confirm_selection(AppState *state) {
                     break;
                 case FLATCAM_REMOVE_GND_PADS:
                     toggle_char(&(state->flatcam_options.remove_gnd_pads), "YN");
+                    break;
+                case FLATCAM_USE_PRINTER_BED_MESH:
+                    toggle_bool(&(state->printer.use_bed_leveling_mesh));
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
                     toggle_char(&(state->flatcam_options.silkscreen_top), "YN");
@@ -448,17 +444,12 @@ int main() {
             .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = 8,
-            .flatcam_options.remove_gnd_pads = 'Y',
+            .flatcam_options.remove_gnd_pads = 'N',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
             .eagle_board = NULL,
             .modify_results.messages = NULL,
-            .printer.mesh_size = 4,
-            .printer.mesh_x_min = 12.0,
-            .printer.mesh_x_max = 205.0,
-            .printer.mesh_y_min = 12.0,
-            .printer.mesh_y_max = 205.0,
 //            .printer.head_offset_x = -48.4,
 //            .printer.head_offset_y = -12.8,
             .leveling.measurements = NULL,

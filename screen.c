@@ -113,6 +113,23 @@ void draw_text_field_char(ScreenBuffer *screen_buffer, const char *title, char v
     bufferAppend(screen_buffer, NEW_LINE);
 }
 
+void draw_text_field_bool(ScreenBuffer *screen_buffer, const char *title, bool value, bool highlight) {
+    char buffer[256];
+    sprintf(buffer, "   %-20s  ", title);
+    bufferAppend(screen_buffer, buffer);
+
+    if (highlight) {
+        enable_highlight(screen_buffer, true);
+    }
+
+    sprintf(buffer, " %c ", value ? 'Y' : 'N');
+    bufferAppend(screen_buffer, buffer);
+    if (highlight) {
+        enable_highlight(screen_buffer, false);
+    }
+    bufferAppend(screen_buffer, NEW_LINE);
+}
+
 /**
  * Set title to NULL to generate an inline field.
  * Specify title as a string to create a full line field.
@@ -188,10 +205,10 @@ void draw_select_action_screen(AppState *state, ScreenBuffer *screen_buffer) {
     bufferAppend(screen_buffer, NEW_LINE);
 
     draw_option(screen_buffer, ACTION_GENERATE_FLATCAM_COMMANDS, "Generate FlatCAM commands", state->action_selection == ACTION_GENERATE_FLATCAM_COMMANDS);
-    draw_option(screen_buffer, ACTION_MODIFY_GCODE, "Modify Gcode", state->action_selection == ACTION_MODIFY_GCODE);
-    draw_option(screen_buffer, ACTION_SHOW_CHECKLIST, "Checklist", state->action_selection == ACTION_SHOW_CHECKLIST);
     if (state->eagle_board != NULL)
         draw_option(screen_buffer, ACTION_PRINTER_LEVELING, "Printer leveling", state->action_selection == ACTION_PRINTER_LEVELING);
+    draw_option(screen_buffer, ACTION_MODIFY_GCODE, "Modify Gcode", state->action_selection == ACTION_MODIFY_GCODE);
+    draw_option(screen_buffer, ACTION_SHOW_CHECKLIST, "Checklist", state->action_selection == ACTION_SHOW_CHECKLIST);
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Back", state->action_selection == ACTION_BUTTON_BACK);
@@ -230,6 +247,7 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     draw_text_field_string(screen_buffer, "Iterations", buffer, state->flatcam_option_selection == FLATCAM_ITERATIONS);
 
     draw_text_field_char(screen_buffer, "Remove GND pads", state->flatcam_options.remove_gnd_pads, state->flatcam_option_selection == FLATCAM_REMOVE_GND_PADS);
+    draw_text_field_bool(screen_buffer, "Use printer bed mesh", state->printer.use_bed_leveling_mesh, state->flatcam_option_selection == FLATCAM_USE_PRINTER_BED_MESH);
 
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, "Silkscreen");
