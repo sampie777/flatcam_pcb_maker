@@ -315,7 +315,7 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, NEW_LINE);
 
     if (state->leveling.column_length > 0 && state->leveling.row_length > 0) {
-        bufferAppend(screen_buffer, SCREEN_COLOR_YELLOW" Y/X "SCREEN_COLOR_RESET);
+        bufferAppend(screen_buffer, SCREEN_COLOR_YELLOW" Y\\X "SCREEN_COLOR_RESET);
         Point3D *current_point;
         for (int j = 0; j < state->leveling.column_length; j++) {
             current_point = &(state->leveling.measurements[0][j]);

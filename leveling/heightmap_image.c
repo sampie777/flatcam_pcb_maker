@@ -33,8 +33,6 @@ void factor_to_height_color(double factor, char *r, char *g, char *b) {
  * @param leveling
  */
 void leveling_create_bitmap(Leveling *leveling, const char *filename) {
-    printf("\n"SCREEN_COLOR_CYAN"Generating image..."SCREEN_COLOR_RESET"\n");
-
     // The margin outside of the measurement points
     int offsetX = 2;
     int offsetY = 2;
