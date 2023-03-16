@@ -19,6 +19,8 @@ void leveling_add_measurement_point(Leveling *leveling, int column, int row, dou
 
 double leveling_calculate_height_for_point(const Leveling *leveling, const Point3D *point);
 
+double leveling_calculate_height_for_coordinate(const Leveling *leveling, double x, double y);
+
 void leveling_calculate_x_and_y_separation_for_measurement_points(AppState *state);
 
 #endif //FLATCAM_PCB_MAKER_BED_LEVELING_H

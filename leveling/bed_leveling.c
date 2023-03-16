@@ -65,6 +65,14 @@ double leveling_calculate_height_for_point(const Leveling *leveling, const Point
     return bilinear_interpolation(leveling, point);
 }
 
+double leveling_calculate_height_for_coordinate(const Leveling *leveling, double x, double y) {
+    Point3D point = {
+            .x = x,
+            .y = y,
+    };
+    return leveling_calculate_height_for_point(leveling, &point);
+}
+
 void leveling_calculate_x_and_y_separation_for_measurement_points(AppState *state) {
     while (state->leveling.row_length) {
         leveling_remove_measurement_row(&(state->leveling));

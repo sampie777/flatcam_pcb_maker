@@ -12,6 +12,7 @@
 #include "file_utils.h"
 #include "gnd_pads.h"
 #include "screen.h"
+#include "leveling/bed_leveling.h"
 
 #define TEMP_FILE_NAME "tempfile"
 
@@ -32,6 +33,56 @@ typedef enum {
     STATUS_MESSAGE_WARNING,
     STATUS_MESSAGE_ERROR,
 } StatusMessageType;
+
+void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **command, bool clamp_z) {
+    static double last_known_x = 0;
+    static double last_known_y = 0;
+    static double last_known_z = 10;
+
+    if (!starts_with(*command, "G")) return;
+
+    // Extract values from possible command syntax
+    int m;
+    double x = -1000, y = -1000, z = -1000;
+    if (sscanf(*command, "G0%d X%lfY%lfZ%lf", &m, &x, &y, &z) != 4) {
+        if (sscanf(*command, "G0%d X%lfY%lf", &m, &x, &y) != 3) {
+            if (sscanf(*command, "G0%d Z%lf", &m, &z) != 2) {
+                return;
+            }
+        }
+    }
+
+    if (x == -1000 && y == -1000 && z == -1000) return;
+
+    // Store new coordinates
+    if (x != -1000) last_known_x = x;
+    if (y != -1000) last_known_y = y;
+    if (z != -1000) {
+        if (clamp_z) {
+            // Clamp Z so the same file can be re-modified again without accumulating the Z values
+            last_known_z = z < 1 ? 0 : 2;
+        } else {
+            last_known_z = z;
+        }
+    }
+
+    // Calculate the height fix
+    z = last_known_z;
+    // Don't calculate if z == 2, as it is not needed
+    if (clamp_z && last_known_z != 2) {
+        z += leveling_calculate_height_for_coordinate(leveling, last_known_x, last_known_y);
+    }
+
+    // Return command with height fix
+    if (x == -1000 && y == -1000) {
+        *command = realloc(*command, (4 + 10 * 1) * sizeof(char));
+        sprintf(*command, "G0%d Z%.4lf", m, z);
+        return;
+    }
+
+    *command = realloc(*command, (4 + 10 * 3) * sizeof(char));
+    sprintf(*command, "G0%d X%.4lfY%.4lfZ%.4lf", m, x, y, z);
+}
 
 void gcode_add_status_message(AppState *state, StatusMessageType type, const char *message) {
     state->modify_results.messages = realloc(state->modify_results.messages, sizeof(char *) * (state->modify_results.message_count + 1));
@@ -577,6 +628,8 @@ int modify_trace_file(AppState *state) {
             has_been_checked_for_gnd_pad = false;
         }
 
+        gcode_transform_coordinates_with_height_map(&(state->leveling), &line, true);
+
         fprintf(temp_file, "%s\n", line);
     }
 
@@ -666,6 +719,8 @@ int modify_silkscreen_file(AppState *state) {
         } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
             limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true);
         }
+
+        gcode_transform_coordinates_with_height_map(&(state->leveling), &line, true);
 
         fprintf(temp_file, "%s\n", line);
     }
