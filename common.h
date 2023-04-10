@@ -178,6 +178,11 @@ typedef struct {
 } Point2D;
 
 typedef struct {
+    int row;
+    int column;
+} Array2DIndex;
+
+typedef struct {
     double x;
     double y;
     double z;
