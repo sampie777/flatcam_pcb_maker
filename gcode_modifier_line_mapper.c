@@ -4,6 +4,7 @@
 
 #include <memory.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "gcode_modifier_line_mapper.h"
 
 
@@ -137,6 +138,10 @@ size_t get_intersection_points_on_line(Leveling *leveling, double from_x, double
 
     free(from_cluster);
     free(to_cluster);
+
+    if (added_points_size >  abs(cluster_column_difference) + abs(cluster_row_difference)) {
+        printf("Added points size does not match allocated memory size\n");
+    }
 
     point2d_array_sort(added_points, added_points_size, from_x > to_x);
     return added_points_size;

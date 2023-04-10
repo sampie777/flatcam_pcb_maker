@@ -13,6 +13,7 @@
 #include "gnd_pads.h"
 #include "screen.h"
 #include "leveling/bed_leveling.h"
+#include "gcode_modifier_line_mapper.h"
 
 #define TEMP_FILE_NAME "tempfile"
 
@@ -33,56 +34,6 @@ typedef enum {
     STATUS_MESSAGE_WARNING,
     STATUS_MESSAGE_ERROR,
 } StatusMessageType;
-
-void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **command, bool clamp_z) {
-    static double last_known_x = 0;
-    static double last_known_y = 0;
-    static double last_known_z = 10;
-
-    if (!starts_with(*command, "G")) return;
-
-    // Extract values from possible command syntax
-    int m;
-    double x = -1000, y = -1000, z = -1000;
-    if (sscanf(*command, "G0%d X%lfY%lfZ%lf", &m, &x, &y, &z) != 4) {
-        if (sscanf(*command, "G0%d X%lfY%lf", &m, &x, &y) != 3) {
-            if (sscanf(*command, "G0%d Z%lf", &m, &z) != 2) {
-                return;
-            }
-        }
-    }
-
-    if (x == -1000 && y == -1000 && z == -1000) return;
-
-    // Store new coordinates
-    if (x != -1000) last_known_x = x;
-    if (y != -1000) last_known_y = y;
-    if (z != -1000) {
-        if (clamp_z) {
-            // Clamp Z so the same file can be re-modified again without accumulating the Z values
-            last_known_z = z < 1 ? 0 : 2;
-        } else {
-            last_known_z = z;
-        }
-    }
-
-    // Calculate the height fix
-    z = last_known_z;
-    // Don't calculate if z == 2, as it is not needed
-    if (clamp_z && last_known_z != 2) {
-        z += leveling_calculate_height_for_coordinate(leveling, last_known_x, last_known_y);
-    }
-
-    // Return command with height fix
-    if (x == -1000 && y == -1000) {
-        *command = realloc(*command, (4 + 10 * 1) * sizeof(char));
-        sprintf(*command, "G0%d Z%.4lf", m, z);
-        return;
-    }
-
-    *command = realloc(*command, (4 + 10 * 3) * sizeof(char));
-    sprintf(*command, "G0%d X%.4lfY%.4lfZ%.4lf", m, x, y, z);
-}
 
 void gcode_add_status_message(AppState *state, StatusMessageType type, const char *message) {
     state->modify_results.messages = realloc(state->modify_results.messages, sizeof(char *) * (state->modify_results.message_count + 1));
@@ -105,6 +56,79 @@ void gcode_add_status_message(AppState *state, StatusMessageType type, const cha
     state->modify_results.messages[state->modify_results.message_count] = malloc(strlen(message) + 16);
     sprintf(state->modify_results.messages[state->modify_results.message_count], "   %s%s%s", color_code, message, SCREEN_COLOR_RESET);
     state->modify_results.message_count++;
+}
+
+double get_z_for_point(const Leveling *leveling, double x, double y, double z, bool clamp_z) {// Calculate the height fix
+    // Don't calculate if z == 2, as it is not needed
+    if (clamp_z && z != 2) {
+        return z + leveling_calculate_height_for_coordinate(leveling, x, y);
+    }
+    return z;
+}
+
+void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **command, bool clamp_z) {
+    static int iteration = 0;
+    static double last_known_x = 0;
+    static double last_known_y = 0;
+    static double last_known_z = 10;
+
+    if (!starts_with(*command, "G")) return;
+
+    // Extract values from possible command syntax
+    int m;
+    double x = -1000, y = -1000, z = -1000;
+    if (sscanf(*command, "G0%d X%lfY%lfZ%lf", &m, &x, &y, &z) != 4) {
+        if (sscanf(*command, "G0%d X%lfY%lf", &m, &x, &y) != 3) {
+            if (sscanf(*command, "G0%d Z%lf", &m, &z) != 2) {
+                // No coordinates found
+                return;
+            }
+        }
+    }
+
+    if (x == -1000 && y == -1000 && z == -1000) return;
+
+    // Store new Z coordinate
+    if (z != -1000) {
+        if (clamp_z) {
+            // Clamp Z so the same file can be re-modified again without accumulating the Z values
+            last_known_z = z < 1 ? 0 : 2;
+        } else {
+            last_known_z = z;
+        }
+    }
+
+    Point2D *added_points = NULL;
+    size_t added_points_length = 0;
+    if (x != -1000 && y != -1000 && last_known_x != 0 && last_known_y != 0) {
+        added_points_length = get_intersection_points_on_line(leveling, last_known_x, last_known_y, x, y, &added_points);
+    }
+
+    // Store new X and Y coordinates
+    if (x != -1000) last_known_x = x;
+    if (y != -1000) last_known_y = y;
+
+    // Return command with height fix
+    if (x == -1000 && y == -1000) {
+        z = get_z_for_point(leveling, last_known_x, last_known_y, last_known_z, clamp_z);
+        *command = realloc(*command, 14 * sizeof(char));
+        sprintf(*command, "G0%d Z%.4lf", m, z);
+        return;
+    }
+
+    *command = realloc(*command,  ((added_points_length + 1) * 34) * sizeof(char));
+    (*command)[0] = '\0';
+
+    char buffer[64];
+    for (int i = 0; i < added_points_length; i++) {
+        z = get_z_for_point(leveling, added_points[i].x, added_points[i].y, last_known_z, clamp_z);
+        sprintf(buffer, "G0%d X%.4lfY%.4lfZ%.4lf\n", m, added_points[i].x, added_points[i].y, z);
+        strcat(*command, buffer);
+    }
+    z = get_z_for_point(leveling, last_known_x, last_known_y, last_known_z, clamp_z);
+
+    sprintf(buffer, "G0%d X%.4lfY%.4lfZ%.4lf", m, x, y, z);
+    strcat(*command, buffer);
 }
 
 void generate_settings_comment(AppState *state, char **out) {
@@ -632,25 +656,6 @@ int modify_trace_file(AppState *state) {
 
         fprintf(temp_file, "%s\n", line);
     }
-
-    // Show located GND pads in gcode
-//    double pad_x;
-//    double pad_y;
-//    for (int i = 0; i < state->eagle_board->pad_count; i++) {
-//        GndPad *pad = &(state->eagle_board->pads[i]);
-//        calculate_location_of_pad(state, pad, &pad_x, &pad_y);
-//        double radius = calculate_max_pad_radius(state, pad);
-//
-//        fprintf(temp_file, "G00 X%lfY%lf\n", pad_x, pad_y);
-//        fprintf(temp_file, "G01 Z0.0000\n");
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x - radius, pad_y);
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x - radius, pad_y - radius);
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x + radius, pad_y - radius);
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x + radius, pad_y + radius);
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x - radius, pad_y + radius);
-//        fprintf(temp_file, "G01 X%lfY%lf\n", pad_x - radius, pad_y - radius);
-//        fprintf(temp_file, "G00 Z2.0000\n");
-//    }
 
     if (line) free(line);
 
