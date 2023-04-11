@@ -6,7 +6,7 @@
 #define FLATCAM_PCB_MAKER_GCODE_MODIFIER_LINE_MAPPER_H
 
 #include <stddef.h>
-#include "common.h"
+#include "../common.h"
 
 /**
  * For this function to work, we expect that leveling row=0 starts with the smallest Y and leveling col=0 the smallest X.

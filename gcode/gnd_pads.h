@@ -5,8 +5,8 @@
 #ifndef FLATCAM_PCB_MAKER_GND_PADS_H
 #define FLATCAM_PCB_MAKER_GND_PADS_H
 
-#include "common.h"
-#include "file_utils.h"
+#include "../common.h"
+#include "../file_utils.h"
 
 void gnd_pads_debug(const AppState *state);
 

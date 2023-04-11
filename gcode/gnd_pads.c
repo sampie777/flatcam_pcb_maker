@@ -7,9 +7,9 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include <math.h>
-#include "utils.h"
+#include "../utils.h"
 #include "gnd_pads.h"
-#include "return_codes.h"
+#include "../return_codes.h"
 
 #define GND_PAD_MAX_DISTANCE_TO_RADIUS_RATIO 1.1
 #define GND_PAD_MIN_MATCH_RATIO 0.95

@@ -7,12 +7,12 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include "gcode_modifier.h"
-#include "utils.h"
-#include "return_codes.h"
-#include "file_utils.h"
+#include "../utils.h"
+#include "../return_codes.h"
+#include "../file_utils.h"
 #include "gnd_pads.h"
-#include "screen.h"
-#include "leveling/bed_leveling.h"
+#include "../screen.h"
+#include "../leveling/bed_leveling.h"
 #include "gcode_modifier_line_mapper.h"
 
 #define TEMP_FILE_NAME "tempfile"

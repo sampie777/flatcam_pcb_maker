@@ -5,7 +5,7 @@
 #ifndef FLATCAM_PCB_MAKER_GCODE_MODIFIER_H
 #define FLATCAM_PCB_MAKER_GCODE_MODIFIER_H
 
-#include "common.h"
+#include "../common.h"
 
 void gcode_modify(AppState *state);
 

@@ -14,11 +14,11 @@
 #include "utils.h"
 #include "dialog.h"
 #include "flatcam_generator.h"
-#include "gcode_modifier.h"
+#include "gcode/gcode_modifier.h"
 #include "checklist.h"
 #include "eagle_board_parser.h"
 #include "return_codes.h"
-#include "gnd_pads.h"
+#include "gcode/gnd_pads.h"
 #include "leveling/bed_leveling.h"
 #include "leveling/heightmap_image.h"
 
