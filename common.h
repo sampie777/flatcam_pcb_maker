@@ -41,9 +41,9 @@ enum Screens {
 
 enum ProjectActions {
     ACTION_GENERATE_FLATCAM_COMMANDS = 0,
+    ACTION_PRINTER_LEVELING,
     ACTION_MODIFY_GCODE,
     ACTION_SHOW_CHECKLIST,
-    ACTION_PRINTER_LEVELING,
     ACTION_BUTTON_BACK,
     ACTION_MAX_VALUE
 };
@@ -58,6 +58,7 @@ enum FlatcamOptions {
     FLATCAM_FEEDRATE,
     FLATCAM_ITERATIONS,
     FLATCAM_REMOVE_GND_PADS,
+    FLATCAM_USE_PRINTER_BED_MESH,
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
@@ -79,16 +80,9 @@ enum ChecklistActions {
 };
 
 enum PrinterLevelingActions {
-    PRINTER_LEVELING_MEASURE0_INPUT_X = 0,
-    PRINTER_LEVELING_MEASURE0_INPUT_Y,
-    PRINTER_LEVELING_MEASURE0_INPUT_Z,
-    PRINTER_LEVELING_MEASURE1_INPUT_X,
-    PRINTER_LEVELING_MEASURE1_INPUT_Y,
-    PRINTER_LEVELING_MEASURE1_INPUT_Z,
-    PRINTER_LEVELING_MEASURE2_INPUT_X,
-    PRINTER_LEVELING_MEASURE2_INPUT_Y,
-    PRINTER_LEVELING_MEASURE2_INPUT_Z,
+    PRINTER_LEVELING_SELECTION_Z,
     PRINTER_LEVELING_BUTTON_BACK,
+    PRINTER_LEVELING_BUTTON_SAVE_IMAGE,
     PRINTER_LEVELING_MAX_VALUE,
 };
 
@@ -181,6 +175,16 @@ typedef struct {
 typedef struct {
     double x;
     double y;
+} Point2D;
+
+typedef struct {
+    int row;
+    int column;
+} Array2DIndex;
+
+typedef struct {
+    double x;
+    double y;
     double z;
 } Point3D;
 
@@ -192,18 +196,15 @@ typedef struct {
 } Plane3D;
 
 typedef struct {
-    Point3D measure0;
-    Point3D measure1;
-    Point3D measure2;
-    int mesh_size;
-    double mesh_x_min;
-    double mesh_x_max;
-    double mesh_y_min;
-    double mesh_y_max;
-    Plane3D plane;
-//    double head_offset_x;
-//    double head_offset_y;
+    bool use_bed_leveling_mesh;
 } PrinterSettings;
+
+typedef struct {
+    double min_distance_between_measurement_points_mm;
+    int column_length;
+    int row_length;
+    Point3D **measurements;
+} Leveling;
 
 typedef struct {
     int row_count;
@@ -222,6 +223,7 @@ typedef struct {
     enum ChecklistActions checklist_selection;
     int checklist_check_position;
     enum PrinterLevelingActions printer_leveling_selection;
+    int printer_leveling_measurement_selected_index;
 
     FlatcamOptions flatcam_options;
     DialogOptions dialog;
@@ -229,6 +231,7 @@ typedef struct {
     EagleBoardProject *eagle_board;
     ModifyGcodeResults modify_results;
     PrinterSettings printer;
+    Leveling leveling;
 } AppState;
 
 typedef struct {

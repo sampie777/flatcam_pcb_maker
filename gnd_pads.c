@@ -40,9 +40,7 @@ double calculate_distance_to_pad(AppState *state, GndPad *pad, double x, double 
     double pad_y;
     calculate_location_of_pad(state, pad, &pad_x, &pad_y);
 
-    double diff_x = pad_x - x;
-    double diff_y = pad_y - y;
-    return sqrt(diff_x * diff_x + diff_y * diff_y);
+    return distance_between_points(pad_x, pad_y, x, y);
 }
 
 double calculate_max_pad_radius(const AppState *state, GndPad *pad) {

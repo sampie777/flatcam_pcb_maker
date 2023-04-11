@@ -19,7 +19,8 @@
 #include "eagle_board_parser.h"
 #include "return_codes.h"
 #include "gnd_pads.h"
-#include "bed_leveling.h"
+#include "leveling/bed_leveling.h"
+#include "leveling/heightmap_image.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -33,6 +34,9 @@ void selection_increase(AppState *state, int value) {
             break;
         case SCREEN_SELECT_ACTION:
             state->action_selection += value;
+            if (state->eagle_board == NULL && state->action_selection == ACTION_PRINTER_LEVELING) {
+                state->action_selection += value;
+            }
             break;
         case SCREEN_GENERATE_FLATCAM:
             state->flatcam_option_selection += value;
@@ -83,6 +87,12 @@ void flatcam_screen_dialog_callback(AppState *state) {
     selection_increase(state, 1);
 }
 
+void leveling_screen_dialog_callback(AppState *state) {
+    if (state->printer_leveling_measurement_selected_index < state->leveling.row_length * state->leveling.column_length - 1) {
+        state->printer_leveling_measurement_selected_index += 1;
+    }
+}
+
 void free_eagle_board(AppState *state) {
     if (state->eagle_board == NULL) return;
     free(state->eagle_board->pads);
@@ -101,18 +111,8 @@ void on_project_selected(AppState *state) {
     if (eagle_job_parse(state) == RESULT_OK) {
         if (eagle_board_parse(state) == RESULT_OK) {
             merge_connected_gnd_pads(state);
+            leveling_calculate_x_and_y_separation_for_measurement_points(state);
         }
-    }
-
-    // Prefill measure points as a suggestion
-    state->printer.measure0.x = state->flatcam_options.offset_x + 1;
-    state->printer.measure0.y = state->flatcam_options.offset_y + 2;
-    state->printer.measure1.y = state->printer.measure0.y;
-
-    if (state->eagle_board != NULL) {
-        state->printer.measure1.x = state->flatcam_options.offset_x + state->eagle_board->width;
-        state->printer.measure2.x = state->flatcam_options.offset_x + state->eagle_board->width;
-        state->printer.measure2.y = state->flatcam_options.offset_y + state->eagle_board->height;
     }
 }
 
@@ -125,6 +125,10 @@ void toggle_char(char *source, char *selection) {
             *source = selection[i + 1];
         return;
     }
+}
+
+void toggle_bool(bool *source) {
+    *source = !*source;
 }
 
 void confirm_selection(AppState *state) {
@@ -163,6 +167,7 @@ void confirm_selection(AppState *state) {
                 case ACTION_PRINTER_LEVELING:
                     state->screen = SCREEN_PRINTER_LEVELING;
                     state->printer_leveling_selection = 0;
+                    state->printer_leveling_measurement_selected_index = 0;
                     break;
                 case ACTION_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_PROJECT;
@@ -182,36 +187,25 @@ void confirm_selection(AppState *state) {
         }
         case SCREEN_PRINTER_LEVELING: {
             switch (state->printer_leveling_selection) {
-                case PRINTER_LEVELING_MEASURE0_INPUT_X:
-                    dialog_show_double_with_callback(state, "Point 0: X", state->printer.measure0.x, &(state->printer.measure0.x), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE0_INPUT_Y:
-                    dialog_show_double_with_callback(state, "Point 0: Y", state->printer.measure0.y, &(state->printer.measure0.y), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE0_INPUT_Z:
-                    dialog_show_double_with_callback(state, "Point 0: Z", state->printer.measure0.z, &(state->printer.measure0.z), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE1_INPUT_X:
-                    dialog_show_double_with_callback(state, "Point 1: X", state->printer.measure1.x, &(state->printer.measure1.x), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE1_INPUT_Y:
-                    dialog_show_double_with_callback(state, "Point 1: Y", state->printer.measure1.y, &(state->printer.measure1.y), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE1_INPUT_Z:
-                    dialog_show_double_with_callback(state, "Point 1: Z", state->printer.measure1.z, &(state->printer.measure1.z), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE2_INPUT_X:
-                    dialog_show_double_with_callback(state, "Point 2: X", state->printer.measure2.x, &(state->printer.measure2.x), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE2_INPUT_Y:
-                    dialog_show_double_with_callback(state, "Point 2: Y", state->printer.measure2.y, &(state->printer.measure2.y), flatcam_screen_dialog_callback, true);
-                    break;
-                case PRINTER_LEVELING_MEASURE2_INPUT_Z:
-                    dialog_show_double_with_callback(state, "Point 2: Z", state->printer.measure2.z, &(state->printer.measure2.z), flatcam_screen_dialog_callback, true);
-                    break;
                 case PRINTER_LEVELING_BUTTON_BACK:
                     state->screen = SCREEN_SELECT_ACTION;
                     break;
+                case PRINTER_LEVELING_BUTTON_SAVE_IMAGE: {
+                    char buffer[256];
+                    sprintf(buffer, "%s.bmp", state->project);
+                    leveling_create_bitmap(&(state->leveling), buffer);
+                }
+                    break;
+                case PRINTER_LEVELING_SELECTION_Z: {
+                    int row = state->printer_leveling_measurement_selected_index / state->leveling.column_length;
+                    int column = state->printer_leveling_measurement_selected_index - row * state->leveling.column_length;
+                    Point3D *point = &(state->leveling.measurements[state->leveling.row_length - row - 1][column]);
+
+                    char buffer[32];
+                    sprintf(buffer, "Height [%.1lf, %.1lf]", point->x, point->y);
+                    dialog_show_double_with_callback(state, buffer, point->z, &(point->z), leveling_screen_dialog_callback, false);
+                    break;
+                }
                 default:
                     break;
             }
@@ -246,6 +240,9 @@ void confirm_selection(AppState *state) {
                     break;
                 case FLATCAM_REMOVE_GND_PADS:
                     toggle_char(&(state->flatcam_options.remove_gnd_pads), "YN");
+                    break;
+                case FLATCAM_USE_PRINTER_BED_MESH:
+                    toggle_bool(&(state->printer.use_bed_leveling_mesh));
                     break;
                 case FLATCAM_SILKSCREEN_TOP:
                     toggle_char(&(state->flatcam_options.silkscreen_top), "YN");
@@ -298,33 +295,61 @@ void editorProcessKeypress(AppState *state) {
             exit(0);
         case ARROW_UP:
             if (state->screen == SCREEN_PRINTER_LEVELING) {
-                if (state->printer_leveling_selection >= PRINTER_LEVELING_MEASURE0_INPUT_X && state->printer_leveling_selection <= PRINTER_LEVELING_MEASURE0_INPUT_Z) {
-                    state->printer_leveling_selection = -1;
+                if (state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z) {
+                    if (state->printer_leveling_measurement_selected_index < state->leveling.column_length) {
+                        selection_increase(state, -1);
+                    } else {
+                        state->printer_leveling_measurement_selected_index -= state->leveling.column_length;
+                    }
                 } else {
-                    selection_increase(state, -3);
+                    if (state->printer_leveling_measurement_selected_index < state->leveling.column_length) {
+                        state->printer_leveling_measurement_selected_index += (state->leveling.row_length - 1) * state->leveling.column_length;
+                    }
+                    selection_increase(state, -1);
                 }
             } else {
                 selection_increase(state, -1);
             }
             break;
         case ARROW_LEFT:
-            selection_increase(state, -1);
+            if (state->screen == SCREEN_PRINTER_LEVELING
+                && state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z) {
+                state->printer_leveling_measurement_selected_index -= 1;
+                if (state->printer_leveling_measurement_selected_index < 0) {
+                    state->printer_leveling_measurement_selected_index = state->leveling.row_length * state->leveling.column_length - 1;
+                }
+            } else {
+                selection_increase(state, -1);
+            }
             break;
         case ARROW_DOWN:
             if (state->screen == SCREEN_PRINTER_LEVELING) {
-                if (state->printer_leveling_selection >= PRINTER_LEVELING_MEASURE2_INPUT_X && state->printer_leveling_selection <= PRINTER_LEVELING_MEASURE2_INPUT_Z) {
-                    state->printer_leveling_selection = PRINTER_LEVELING_BUTTON_BACK;
-                } else if (state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_BACK) {
-                    state->printer_leveling_selection++;
+                if (state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z) {
+                    if (state->printer_leveling_measurement_selected_index < (state->leveling.row_length - 1) * state->leveling.column_length) {
+                        state->printer_leveling_measurement_selected_index += state->leveling.column_length;
+                    } else {
+                        selection_increase(state, 1);
+                    }
                 } else {
-                    selection_increase(state, 3);
+                    while (state->printer_leveling_measurement_selected_index >= state->leveling.column_length) {
+                        state->printer_leveling_measurement_selected_index -= (state->leveling.row_length - 1) * state->leveling.column_length;
+                    }
+                    selection_increase(state, 1);
                 }
             } else {
                 selection_increase(state, 1);
             }
             break;
         case ARROW_RIGHT:
-            selection_increase(state, 1);
+            if (state->screen == SCREEN_PRINTER_LEVELING
+                && state->printer_leveling_selection == PRINTER_LEVELING_SELECTION_Z) {
+                state->printer_leveling_measurement_selected_index += 1;
+                if (state->printer_leveling_measurement_selected_index >= state->leveling.row_length * state->leveling.column_length) {
+                    state->printer_leveling_measurement_selected_index = 0;
+                }
+            } else {
+                selection_increase(state, 1);
+            }
             break;
         case BACKSPACE:
             if (state->dialog.show) {
@@ -407,10 +432,6 @@ void app_control(AppState *state) {
             status_message_start_time = 0;
         }
     }
-
-    if (state->screen == SCREEN_PRINTER_LEVELING) {
-        bed_leveling_calculate(state);
-    }
 }
 
 int main() {
@@ -423,19 +444,14 @@ int main() {
             .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = 8,
-            .flatcam_options.remove_gnd_pads = 'Y',
+            .flatcam_options.remove_gnd_pads = 'N',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
             .eagle_board = NULL,
             .modify_results.messages = NULL,
-            .printer.mesh_size = 4,
-            .printer.mesh_x_min = 12.0,
-            .printer.mesh_x_max = 205.0,
-            .printer.mesh_y_min = 12.0,
-            .printer.mesh_y_max = 205.0,
-//            .printer.head_offset_x = -48.4,
-//            .printer.head_offset_y = -12.8,
+            .leveling.measurements = NULL,
+            .leveling.min_distance_between_measurement_points_mm = 17.0,
     };
     state.status_message[0] = '\0';
 

@@ -6,6 +6,7 @@
 #define FLATCAM_PCB_MAKER_UTILS_H
 
 #include <stdbool.h>
+#include "common.h"
 
 #ifndef max
 #define max(x, y) (((x) > (y)) ? (x) : (y))
@@ -27,5 +28,13 @@ bool starts_with(const char *source, const char *needle);
 void string_replace(char *input, char needle, char replacement);
 
 void auto_format_double_string(char *input);
+
+double distance_between_points(double x1, double y1, double x2, double y2);
+
+double distance_between_3d_points(const Point3D *a, const Point3D *b);
+
+double vector_dot(const Point2D *a, const Point2D *b);
+
+double vector_len(const Point2D *a);
 
 #endif //FLATCAM_PCB_MAKER_UTILS_H

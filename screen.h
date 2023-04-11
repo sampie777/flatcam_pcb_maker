@@ -16,6 +16,8 @@
 #define SCREEN_COLOR_CYAN "\x1b[36m"
 #define SCREEN_COLOR_RESET "\x1b[39m"
 
+#define NEW_LINE "\r\n\x1b[K"
+
 void screen_refresh(AppState *state);
 
 #endif //FLATCAM_PCB_MAKER_SCREEN_H
