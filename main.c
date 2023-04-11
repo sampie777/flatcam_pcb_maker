@@ -450,8 +450,6 @@ int main() {
             .flatcam_options.silkscreen_mirror = 'N',
             .eagle_board = NULL,
             .modify_results.messages = NULL,
-//            .printer.head_offset_x = -48.4,
-//            .printer.head_offset_y = -12.8,
             .leveling.measurements = NULL,
             .leveling.min_distance_between_measurement_points_mm = 17.0,
     };

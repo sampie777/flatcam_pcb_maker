@@ -125,8 +125,9 @@ void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **comm
         sprintf(buffer, "G0%d X%.4lfY%.4lfZ%.4lf\n", m, added_points[i].x, added_points[i].y, z);
         strcat(*command, buffer);
     }
-    z = get_z_for_point(leveling, last_known_x, last_known_y, last_known_z, clamp_z);
+    free(added_points);
 
+    z = get_z_for_point(leveling, last_known_x, last_known_y, last_known_z, clamp_z);
     sprintf(buffer, "G0%d X%.4lfY%.4lfZ%.4lf", m, x, y, z);
     strcat(*command, buffer);
 }
