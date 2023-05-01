@@ -3,6 +3,7 @@
 //
 
 #include <malloc.h>
+#include <stdio.h>
 #include "bitmap.h"
 
 
