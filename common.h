@@ -81,6 +81,7 @@ enum ChecklistActions {
 
 enum PrinterLevelingActions {
     PRINTER_LEVELING_SELECTION_Z,
+    PRINTER_LEVELING_BUTTON_AUTO_LEVEL,
     PRINTER_LEVELING_BUTTON_BACK,
     PRINTER_LEVELING_BUTTON_SAVE_IMAGE,
     PRINTER_LEVELING_MAX_VALUE,
@@ -199,11 +200,21 @@ typedef struct {
     bool use_bed_leveling_mesh;
 } PrinterSettings;
 
+typedef enum {
+    AUTO_LEVELING_STATUS_IDLE = 0,
+    AUTO_LEVELING_STATUS_SHOULD_START,
+    AUTO_LEVELING_STATUS_RUNNING,
+    AUTO_LEVELING_STATUS_SHOULD_STOP,
+} AutoLevelingStatus;
+
 typedef struct {
+    AutoLevelingStatus auto_leveling_status;
     double min_distance_between_measurement_points_mm;
     int column_length;
     int row_length;
     Point3D **measurements;
+    bool device_has_error;
+    char device_error[256];
 } Leveling;
 
 typedef struct {

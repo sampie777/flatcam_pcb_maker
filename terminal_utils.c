@@ -96,12 +96,19 @@ int getWindowSize(int *rows, int *cols) {
     return 0;
 }
 
-int editorReadKey() {
+int editorReadKey(bool blocking) {
     int nread;
     char c = '\0';
-    while ((nread = (int) read(STDIN_FILENO, &c, 1)) != 1) {
+    if (blocking) {
+        while ((nread = (int) read(STDIN_FILENO, &c, 1)) != 1) {
+            if (nread == -1 && errno != EAGAIN)
+                die("Failed to read input");
+        }
+    } else {
+        nread = (int) read(STDIN_FILENO, &c, 1);
         if (nread == -1 && errno != EAGAIN)
             die("Failed to read input");
+        if (nread == 0) return -1;
     }
 
     if (c != '\x1b')

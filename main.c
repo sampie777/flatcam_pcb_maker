@@ -21,6 +21,7 @@
 #include "gcode/gnd_pads.h"
 #include "leveling/bed_leveling.h"
 #include "leveling/heightmap_image.h"
+#include "printer/auto_leveling.h"
 
 void selection_increase(AppState *state, int value) {
     if (state->dialog.show) {
@@ -206,6 +207,13 @@ void confirm_selection(AppState *state) {
                     dialog_show_double_with_callback(state, buffer, point->z, &(point->z), leveling_screen_dialog_callback, false);
                     break;
                 }
+                case PRINTER_LEVELING_BUTTON_AUTO_LEVEL:
+                    if (state->leveling.auto_leveling_status == AUTO_LEVELING_STATUS_IDLE) {
+                        state->leveling.auto_leveling_status = AUTO_LEVELING_STATUS_SHOULD_START;
+                    } else {
+                        state->leveling.auto_leveling_status = AUTO_LEVELING_STATUS_SHOULD_STOP;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -284,7 +292,8 @@ void confirm_selection(AppState *state) {
 }
 
 void editorProcessKeypress(AppState *state) {
-    int c = editorReadKey();
+    int c = editorReadKey(true);
+    if (c == -1) return;
 
     switch (c) {
         case '\r':  // ENTER key
@@ -431,6 +440,11 @@ void app_control(AppState *state) {
             state->status_message[0] = '\0';
             status_message_start_time = 0;
         }
+    }
+
+    if (state->leveling.auto_leveling_status == AUTO_LEVELING_STATUS_SHOULD_START) {
+        // This will return when finished
+        auto_leveling_run(state);
     }
 }
 

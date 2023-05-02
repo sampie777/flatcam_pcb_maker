@@ -37,4 +37,6 @@ double vector_dot(const Point2D *a, const Point2D *b);
 
 double vector_len(const Point2D *a);
 
+void wait_seconds(int seconds);
+
 #endif //FLATCAM_PCB_MAKER_UTILS_H

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
 #include <windows.h>
@@ -169,4 +170,9 @@ double vector_dot(const Point2D *a, const Point2D *b) {
 
 double vector_len(const Point2D *a) {
     return sqrt(vector_dot(a, a));
+}
+
+void wait_seconds(int seconds) {
+    long end = time(0) + seconds;
+    while (time(0) < end);
 }

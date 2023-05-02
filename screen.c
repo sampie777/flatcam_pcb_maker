@@ -321,6 +321,13 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
     bufferAppend(screen_buffer, NEW_LINE);
     bufferAppend(screen_buffer, NEW_LINE);
 
+    if (state->leveling.device_has_error) {
+        bufferAppend(screen_buffer, SCREEN_BACKGROUND_COLOR_YELLOW""SCREEN_COLOR_BLACK"Device error: ");
+        bufferAppend(screen_buffer, NEW_LINE);
+        bufferAppend(screen_buffer, state->leveling.device_error);
+        bufferAppend(screen_buffer, SCREEN_COLOR_RESET""NEW_LINE);
+    }
+
     bufferAppend(screen_buffer, "Columns:  ");
     sprintf(buffer, "  %2d   ", state->leveling.column_length);
     bufferAppend(screen_buffer, buffer);
@@ -356,6 +363,20 @@ void draw_show_printer_leveling_screen(AppState *state, ScreenBuffer *screen_buf
             }
             bufferAppend(screen_buffer, NEW_LINE);
         }
+    }
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, "Auto level: ");
+    if (state->leveling.auto_leveling_status == AUTO_LEVELING_STATUS_IDLE) {
+        draw_button(screen_buffer, "Start", state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_AUTO_LEVEL);
+    } else {
+        draw_button(screen_buffer, "Stop", state->printer_leveling_selection == PRINTER_LEVELING_BUTTON_AUTO_LEVEL);
+    }
+
+    if (!state->leveling.device_has_error && state->leveling.device_error[0] != '\0') {
+        bufferAppend(screen_buffer, "  " SCREEN_COLOR_CYAN);
+        bufferAppend(screen_buffer, state->leveling.device_error);
+        bufferAppend(screen_buffer, SCREEN_COLOR_RESET);
     }
 
     bufferAppend(screen_buffer, NEW_LINE);
