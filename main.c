@@ -465,7 +465,7 @@ int main() {
             .eagle_board = NULL,
             .modify_results.messages = NULL,
             .leveling.measurements = NULL,
-            .leveling.min_distance_between_measurement_points_mm = 17.0,
+            .leveling.min_distance_between_measurement_points_mm = 9.0,
     };
     state.status_message[0] = '\0';
 
