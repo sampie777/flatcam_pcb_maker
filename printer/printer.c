@@ -60,8 +60,8 @@ bool printer_endstop_z_triggered(SerialDevice *device) {
     return true;
 }
 
-double printer_find_height_for(SerialDevice *device, double x, double y) {
-    if (!device->opened || device->has_error) return 2;
+double printer_find_height_for(AppState *state, SerialDevice *device, double x, double y, bool (*should_stop)(AppState *state, SerialDevice *device)) {
+    if (!device->opened || should_stop(state, device)) return 2;
     char buffer[256];
 
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z5.00");
@@ -73,7 +73,7 @@ double printer_find_height_for(SerialDevice *device, double x, double y) {
 
     double z = 2;
     while (!printer_endstop_z_triggered(device) && z > 0) {
-        if (!device->opened || device->has_error) return z;
+        if (!device->opened || should_stop(state, device)) return z;
 
         z -= 0.01;
         sprintf(buffer, G_LINEAR_MOVE_EXTRUSION" Z%.4lf", z);
@@ -84,13 +84,13 @@ double printer_find_height_for(SerialDevice *device, double x, double y) {
     return z;
 }
 
-void printer_auto_home(SerialDevice *device) {
+void printer_auto_home(AppState *state, SerialDevice *device, bool (*should_stop)(AppState *state, SerialDevice *device)) {
     serial_println(device, G_AUTO_HOME);
 
     char buffer[256];
     while (true) {
         serial_read_line(device, buffer, sizeof(buffer));
-        if (!device->opened || device->has_error) return;
+        if (!device->opened || should_stop(state, device)) return;
         if (starts_with(buffer, "X:0.00 Y:0.00")) {
             // Homing done
             return;
@@ -98,14 +98,14 @@ void printer_auto_home(SerialDevice *device) {
     }
 }
 
-void printer_init(SerialDevice *device) {
+void printer_init(AppState *state, SerialDevice *device, bool (*should_stop)(AppState *state, SerialDevice *device)) {
     serial_open(device);
-    if (!device->opened || device->has_error) return;
+    if (!device->opened || should_stop(state, device)) return;
 
     serial_read_clear(device, 10);
     serial_println(device, G_MILLIMETER_UNITS);
     serial_println(device, G_ABSOLUTE_POSITIONING);
-    printer_auto_home(device);
+    printer_auto_home(state, device, should_stop);
 
     serial_println(device, G_PAUSE_MILLISECONDS"50");
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" F3000");
@@ -120,9 +120,7 @@ void printer_disconnect(SerialDevice *device) {
 }
 
 void printer_finish(SerialDevice *device) {
-    serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z5.00");
+    serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z30.00");
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" X0.00");
     wait_seconds(2);
-
-    printer_disconnect(device);
 }

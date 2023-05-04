@@ -300,6 +300,7 @@ void editorProcessKeypress(AppState *state) {
             confirm_selection(state);
             break;
         case CTRL_KEY('q'):
+        case CTRL_KEY('c'):
             clearScreen();
             exit(0);
         case ARROW_UP:

@@ -31,30 +31,37 @@ void process_key_press(AppState *state) {
     }
 }
 
-bool should_stop(Leveling *leveling, const SerialDevice *device) {
-    leveling->device_has_error = device->has_error;
-    strcpy(leveling->device_error, device->error);
-    return leveling->auto_leveling_status == AUTO_LEVELING_STATUS_SHOULD_STOP || device->has_error;
+void update_device_error(AppState *state, const SerialDevice *device) {
+    if (state->leveling.auto_leveling_status == AUTO_LEVELING_STATUS_SHOULD_STOP) {
+        state->leveling.device_has_error = false;
+        strcpy(state->leveling.device_error, "Interrupted");
+    } else {
+        state->leveling.device_has_error = device->has_error;
+        strcpy(state->leveling.device_error, device->error);
+    }
+}
+
+bool should_stop(AppState *state, SerialDevice *device) {
+    process_key_press(state);
+    update_device_error(state, device);
+    screen_refresh(state);
+    return state->leveling.auto_leveling_status == AUTO_LEVELING_STATUS_SHOULD_STOP || device->has_error;
 }
 
 void auto_leveling_loop(AppState *state, SerialDevice *device) {
     screen_refresh(state);
-    printer_init(device);
+    printer_init(state, device, should_stop);
 
     for (int i = 0; i < state->leveling.row_length; i++) {
         for (int j = 0; j < state->leveling.column_length; j++) {
-            process_key_press(state);
-            if (should_stop(&(state->leveling), device)) return;
+            if (should_stop(state, device)) return;
 
             Point3D *point = &(state->leveling.measurements[i][j]);
-            point->z = printer_find_height_for(device, point->x, point->y);
-
-            screen_refresh(state);
+            point->z = printer_find_height_for(state, device, point->x, point->y, should_stop);
         }
     }
 
-    process_key_press(state);
-    if (should_stop(&(state->leveling), device)) return;
+    if (should_stop(state, device)) return;
 
     printer_finish(device);
 }
