@@ -193,7 +193,7 @@ void confirm_selection(AppState *state) {
                     break;
                 case PRINTER_LEVELING_BUTTON_SAVE_IMAGE: {
                     char buffer[256];
-                    sprintf(buffer, "%s.bmp", state->project);
+                    sprintf(buffer, "%s/%s/%s.bmp", state->projects_path, state->project, state->project);
                     leveling_create_bitmap(&(state->leveling), buffer);
                 }
                     break;

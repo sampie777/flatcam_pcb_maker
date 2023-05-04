@@ -2,7 +2,6 @@
 // Created by samuel on 15-3-23.
 //
 
-#include <math.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
@@ -10,6 +9,7 @@
 #include "height_calculation.h"
 #include "../screen.h"
 #include "../bitmap.h"
+#include "utils_color.h"
 
 
 double get_height_for_point(const Leveling *leveling, Point3D *point) {
@@ -17,15 +17,10 @@ double get_height_for_point(const Leveling *leveling, Point3D *point) {
 }
 
 void factor_to_height_color(double factor, char *r, char *g, char *b) {
-    if (factor > 0.5) {
-        *r = (char) (255 * sin((factor - 0.5) * 2 * 0.5 * M_PI));
-        *g = (char) (255 * cos((factor - 0.5) * 2 * 0.5 * M_PI));
-        *b = 0;
-    } else {
-        *r = 0;
-        *g = (char) (255 * sin((factor) * 2 * 0.5 * M_PI));
-        *b = (char) (255 * cos((factor) * 2 * 0.5 * M_PI));
-    }
+    RGB rgb = hsl2rgb((1 - factor) * 0.85 - 0.15, 1, 0.5);
+    *r = rgb.r;
+    *g = rgb.g;
+    *b = rgb.b;
 }
 
 /**
@@ -190,7 +185,7 @@ void leveling_create_terminal_image(Leveling *leveling, int width, char **output
     int canvas_width = width;
     int canvas_height = (int) (0.37 * board_height * ((double) canvas_width / board_width));
 
-    *output = malloc((canvas_width + 1 + 2) * 8 * (canvas_height + 1) * sizeof(char) + canvas_height * sizeof(char));
+    *output = malloc((canvas_width + 1) * (5 + 2 + 4 + 5) * (canvas_height + 1) * sizeof(char) + canvas_height * sizeof(char));
     *output[0] = '\0';
     char buffer[32];
     for (int i = canvas_height; i >= 0; i--) {
