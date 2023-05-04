@@ -55,10 +55,6 @@ void serial_open(SerialDevice *device) {
     // disable any special handling of output chars/bytes
     tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
     tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) || defined(__CYGWIN__)
-    tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT IN LINUX)
-    tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT IN LINUX)
-#endif
 
     tty.c_cc[VTIME] = 1;    // Wait for up to x deciseconds (10 decisecond = 1 second), returning as soon as any data is received.
     tty.c_cc[VMIN] = 0;
