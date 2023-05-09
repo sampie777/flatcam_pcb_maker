@@ -58,7 +58,7 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
             state->projects_path, state->project,
             state->flatcam_options.offset_x - state->eagle_board->min_x,
             state->flatcam_options.offset_y - state->eagle_board->min_y,
-            should_mirror ? "" : "mirror drills_mirrored -axis Y -box profile\n",
+            should_mirror ? "mirror drills_mirrored -axis Y -box profile\n" : "",
             state->projects_path, state->project, DRILLS_MIRRORED_CHECK_OUTPUT_FILE,
             traces_top_output, traces_bottom_output,
             should_silkscreen_top ? "silkscreen_top.follow" : "",
