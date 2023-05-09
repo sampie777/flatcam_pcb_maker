@@ -79,4 +79,5 @@ void auto_leveling_run(AppState *state) {
 
     printer_disconnect(&device);
     state->leveling.auto_leveling_status = AUTO_LEVELING_STATUS_IDLE;
+    screen_refresh(state);
 }
