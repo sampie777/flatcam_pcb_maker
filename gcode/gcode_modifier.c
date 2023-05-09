@@ -17,6 +17,8 @@
 
 #define TEMP_FILE_NAME "tempfile"
 
+#define Z_TRAVEL_HEIGHT 3.0
+
 #define SETTINGS_COMMENT_START "; [FPB]"
 #define G_USE_MESH "M420 S1 ; Use mesh"
 #define G_BEEP "M300 S500 P500 ; Beep"
@@ -59,8 +61,8 @@ void gcode_add_status_message(AppState *state, StatusMessageType type, const cha
 }
 
 double get_z_for_point(const Leveling *leveling, double x, double y, double z, bool clamp_z) {// Calculate the height fix
-    // Don't calculate if z == 2, as it is not needed
-    if (clamp_z && z != 2) {
+    // Don't calculate if z == Z_TRAVEL_HEIGHT, as it is not needed
+    if (clamp_z && z != Z_TRAVEL_HEIGHT) {
         return z + leveling_calculate_height_for_coordinate(leveling, x, y);
     }
     return z;
@@ -92,7 +94,7 @@ void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **comm
     if (z != -1000) {
         if (clamp_z) {
             // Clamp Z so the same file can be re-modified again without accumulating the Z values
-            last_known_z = z < 1 ? 0 : 2;
+            last_known_z = z < 1 ? 0 : Z_TRAVEL_HEIGHT;
         } else {
             last_known_z = z;
         }
