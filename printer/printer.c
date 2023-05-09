@@ -22,7 +22,7 @@
 #define G_PAUSE_SD_PRINT "M25"
 #define G_GET_CURRENT_POSITION "M114"
 #define G_GET_ENDSTOP_STATES "M119"
-#define G_PLAY_TONE "M300"
+#define G_PLAY_TONE "M300 S2000 P500"
 
 /*
  * When asking the printer for endstop states, the following response can be expected:
@@ -34,15 +34,17 @@ filament: TRIGGERED
 ok P15 B3
 ```
  */
-bool printer_endstop_z_triggered(SerialDevice *device) {
+bool printer_endstop_z_triggered(AppState *state, SerialDevice *device, bool (*should_stop)(AppState *state, SerialDevice *device)) {
     char buffer[256];
     serial_read_clear(device, 2);
     serial_println(device, G_GET_ENDSTOP_STATES);
     serial_read_line(device, buffer, sizeof(buffer));
 
     // find triggered part
-    if (!starts_with(buffer, "Reporting endstop status")) {
-        return true;
+    while (!starts_with(buffer, "Reporting endstop status")) {
+        if (should_stop(state, device)) return false;
+
+        serial_read_line(device, buffer, sizeof(buffer));
     }
 
     char *part = strtok(buffer, "\n");
@@ -60,6 +62,18 @@ bool printer_endstop_z_triggered(SerialDevice *device) {
     return true;
 }
 
+void printer_move_to(AppState *state, SerialDevice *device, double x, double y, bool (*should_stop)(AppState *state, SerialDevice *device)) {
+    if (!device->opened || should_stop(state, device)) return;
+    char buffer[256];
+
+    serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z5.00");
+    sprintf(buffer, G_LINEAR_MOVE_NON_EXTRUSION" X%.4lfY%.4lf", x, y);
+    serial_println(device, buffer);
+
+    serial_read_clear(device, 4);
+    wait_seconds(1);
+}
+
 double printer_find_height_for(AppState *state, SerialDevice *device, double x, double y, bool (*should_stop)(AppState *state, SerialDevice *device)) {
     if (!device->opened || should_stop(state, device)) return 2;
     char buffer[256];
@@ -68,11 +82,11 @@ double printer_find_height_for(AppState *state, SerialDevice *device, double x, 
     sprintf(buffer, G_LINEAR_MOVE_NON_EXTRUSION" X%.4lfY%.4lf", x, y);
     serial_println(device, buffer);
 
-    wait_seconds(2);
+    wait_seconds(1);
     serial_read_clear(device, 6);
 
     double z = 2;
-    while (!printer_endstop_z_triggered(device) && z > 0) {
+    while (!printer_endstop_z_triggered(state, device, should_stop) && z > 0) {
         if (!device->opened || should_stop(state, device)) return z;
 
         z -= 0.01;
@@ -88,9 +102,8 @@ void printer_auto_home(AppState *state, SerialDevice *device, bool (*should_stop
     serial_println(device, G_AUTO_HOME);
 
     char buffer[256];
-    while (true) {
+    while (device->opened && !should_stop(state, device)) {
         serial_read_line(device, buffer, sizeof(buffer));
-        if (!device->opened || should_stop(state, device)) return;
         if (starts_with(buffer, "X:0.00 Y:0.00")) {
             // Homing done
             return;
@@ -105,12 +118,12 @@ void printer_init(AppState *state, SerialDevice *device, bool (*should_stop)(App
     serial_read_clear(device, 10);
     serial_println(device, G_MILLIMETER_UNITS);
     serial_println(device, G_ABSOLUTE_POSITIONING);
+    serial_println(device, G_ENABLE_STEPPERS);
     printer_auto_home(state, device, should_stop);
 
-    serial_println(device, G_PAUSE_MILLISECONDS"50");
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" F3000");
-    serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z2.00");
-    serial_println(device, G_PAUSE_MILLISECONDS"50");
+    serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z5.00");
+    serial_println(device, G_PAUSE_MILLISECONDS"1");
 
     serial_read_clear(device, 10);
 }
@@ -122,5 +135,7 @@ void printer_disconnect(SerialDevice *device) {
 void printer_finish(SerialDevice *device) {
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" Z30.00");
     serial_println(device, G_LINEAR_MOVE_NON_EXTRUSION" X0.00");
+    serial_println(device, G_DISABLE_STEPPERS);
+    serial_println(device, G_PLAY_TONE);
     wait_seconds(2);
 }
