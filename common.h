@@ -14,6 +14,7 @@
 #define DRILLS_OUTPUT_FILE "3_drill_holes.gcode"
 #define DRILLS_MIRRORED_CHECK_OUTPUT_FILE "4_check_mirrored_holes_cnc.gcode"
 #define SILKSCREEN_OUTPUT_FILE "5_draw_silkscreen.gcode"
+#define SOLDER_MASK_OUTPUT_FILE "6_cut_solder_mask.gcode"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 

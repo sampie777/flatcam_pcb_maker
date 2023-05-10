@@ -728,8 +728,6 @@ int modify_silkscreen_file(AppState *state) {
             limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true);
         }
 
-        gcode_transform_coordinates_with_height_map(&(state->leveling), &line, true);
-
         fprintf(temp_file, "%s\n", line);
     }
     if (line) free(line);
@@ -737,6 +735,76 @@ int modify_silkscreen_file(AppState *state) {
     fclose(temp_file);
     fclose(file);
     return replace_file_with_tempfile(state, SILKSCREEN_OUTPUT_FILE);
+}
+
+int modify_solder_mask_file(AppState *state) {
+    double min_x, min_y, max_x, max_y;
+    int result = get_profile_bounds(state, &min_x, &min_y, &max_x, &max_y);
+    if (result != RESULT_OK) return result;
+
+    if (min_x < state->flatcam_options.offset_x || min_y < state->flatcam_options.offset_y) {
+        gcode_add_status_message(state, STATUS_MESSAGE_WARNING, "   Some traces are out of bounds!");
+    }
+
+    FILE *file, *temp_file;
+    result = open_files(state, SOLDER_MASK_OUTPUT_FILE, &file, &temp_file);
+    if (result != RESULT_OK) return result;
+
+    bool settings_comment_present = false;
+    bool use_mesh_present = false;
+    bool home_axis_present = false;
+    bool end_print_beep_present = false;
+
+    char *line = NULL;
+    while (file_read_line(file, &line) == RESULT_OK) {
+        if (starts_with(line, SETTINGS_COMMENT_START)) continue;
+        if (!settings_comment_present) {
+            char *buffer;
+            generate_settings_comment(state, &buffer);
+            fprintf(temp_file, "%s", buffer);
+            settings_comment_present = true;
+        }
+
+        if (starts_with(line, "F")) {
+            fprintf(temp_file, "G0 %s\n", line);
+            continue;
+        }
+
+        if (starts_with(line, G_DWELL_1MS) && !use_mesh_present) {
+            // Home axis before we can use mesh
+            if (!home_axis_present) {
+                fprintf(temp_file, G_HOME_AXIS"\n");
+                home_axis_present = true;
+            }
+
+            if (state->printer.use_bed_leveling_mesh) {
+                fprintf(temp_file, G_USE_MESH"\n");
+                use_mesh_present = true;
+            }
+        } else if (strcmp(line, G_HOME_AXIS) == 0) {
+            if (home_axis_present) continue;
+            home_axis_present = true;
+        } else if (strcmp(line, G_SPINDLE_OFF) == 0 && !end_print_beep_present) {
+            fprintf(temp_file, G_BEEP_END"\n");
+            end_print_beep_present = true;
+        } else if (strcmp(line, G_USE_MESH) == 0) {
+            if (!state->printer.use_bed_leveling_mesh) {
+                continue;
+            }
+            use_mesh_present = true;
+        } else if (strcmp(line, G_BEEP_END) == 0) {
+            end_print_beep_present = true;
+        } else if (starts_with(line, "G00 X") || starts_with(line, "G01 X")) {
+            limit_line_to_bounds(&line, min_x, min_y, max_x, max_y, true);
+        }
+
+        fprintf(temp_file, "%s\n", line);
+    }
+    if (line) free(line);
+
+    fclose(temp_file);
+    fclose(file);
+    return replace_file_with_tempfile(state, SOLDER_MASK_OUTPUT_FILE);
 }
 
 int total_removed_gnd_pads(AppState *state) {
@@ -781,4 +849,7 @@ void gcode_modify(AppState *state) {
 
     gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Silkscreen:");
     if (modify_silkscreen_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
+
+    gcode_add_status_message(state, STATUS_MESSAGE_INFO, "Solder mask:");
+    if (modify_solder_mask_file(state) == RESULT_OK) gcode_add_status_message(state, STATUS_MESSAGE_SUCCESS, "   Modified.");
 }

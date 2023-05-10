@@ -9,6 +9,35 @@
 #include "flatcam_generator.h"
 #include "utils.h"
 
+char *generate_soldermask_commands(const AppState *state) {
+    int should_mirror = state->flatcam_options.mirror == 'Y';
+    int traces_are_on_bottom = state->flatcam_options.traces == 'B';
+
+    char *traces_file = traces_are_on_bottom ? "soldermask_bottom" : "soldermask_top";
+
+    char *output = malloc(sizeof(char) * 1024);
+
+    sprintf(output, "\n\n"
+            "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname soldermask\n"
+            "offset soldermask %lf %lf\n"
+            "%s"
+            "isolate soldermask -dia %lf -passes %d -overlap 1 -combine 1 -outname soldermask.iso\n"
+            "\n"
+            "cncjob soldermask.iso -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
+            "write_gcode soldermask.iso_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"",
+
+            state->projects_path, state->project, traces_file,
+            state->flatcam_options.offset_x - state->eagle_board->min_x, state->flatcam_options.offset_y - state->eagle_board->min_y,
+            should_mirror ? "mirror soldermask -axis Y -box profile\n" : "",
+            state->flatcam_options.dia_width, state->flatcam_options.iterations,
+
+            state->flatcam_options.feedrate_etch,
+            state->projects_path, state->project, SOLDER_MASK_OUTPUT_FILE
+    );
+
+    return output;
+}
+
 void generate_silkscreen_commands(const AppState *state, char **output) {
     int should_mirror = state->flatcam_options.silkscreen_mirror == 'Y';
     int should_silkscreen_top = state->flatcam_options.silkscreen_top == 'Y';
@@ -78,6 +107,8 @@ void generate_script(const AppState *state) {
     char *silkscreen_output;
     generate_silkscreen_commands(state, &silkscreen_output);
 
+    char *soldermask_output = generate_soldermask_commands(state);
+
     char output[3072];
     sprintf(output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/profile.gbr\" -outname profile\n"
                     "offset profile %lf %lf\n"
@@ -102,6 +133,7 @@ void generate_script(const AppState *state) {
                     "write_gcode pre_drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode check_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"\n"
                     "write_gcode drill_holes_cnc \"%s/%s/CAMOutputs/flatCAM/%s\""
+                    "%s"
                     "%s"
                     "%s",
             state->projects_path, state->project,
@@ -129,10 +161,12 @@ void generate_script(const AppState *state) {
             state->projects_path, state->project, DRILLS_OUTPUT_FILE,
 
             silkscreen_output ? silkscreen_output : "",
+            soldermask_output ? soldermask_output : "",
             should_mirror ? "" : "\nplot"
     );
 
     free(silkscreen_output);
+    free(soldermask_output);
 
     copy_to_clipboard(output);
 
