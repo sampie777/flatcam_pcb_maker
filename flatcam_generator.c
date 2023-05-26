@@ -152,8 +152,8 @@ void generate_script(const AppState *state) {
             state->projects_path, state->project, TRACES_OUTPUT_FILE,
 
             state->projects_path, state->project,
-            state->flatcam_options.offset_x - state->eagle_board->min_x,
-            state->flatcam_options.offset_y - state->eagle_board->min_y,
+            state->flatcam_options.drill_offset_x - state->eagle_board->min_x,
+            state->flatcam_options.drill_offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror drills -axis Y -box profile\n" : "",
 
             state->projects_path, state->project, PRE_DRILLS_OUTPUT_FILE,

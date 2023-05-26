@@ -118,7 +118,7 @@ void gcode_transform_coordinates_with_height_map(Leveling *leveling, char **comm
         return;
     }
 
-    *command = realloc(*command,  ((added_points_length + 1) * 34) * sizeof(char));
+    *command = realloc(*command, ((added_points_length + 1) * 34) * sizeof(char));
     (*command)[0] = '\0';
 
     char buffer[64];
@@ -155,7 +155,9 @@ void generate_settings_comment(AppState *state, char **out) {
             SETTINGS_COMMENT_START" remove_gnd_pads=%c\n"
             SETTINGS_COMMENT_START" silkscreen_top=%c\n"
             SETTINGS_COMMENT_START" silkscreen_bottom=%c\n"
-            SETTINGS_COMMENT_START" silkscreen_mirror=%c\n",
+            SETTINGS_COMMENT_START" silkscreen_mirror=%c\n"
+            SETTINGS_COMMENT_START" drill_offset_x=%lf\n"
+            SETTINGS_COMMENT_START" drill_offset_y=%lf\n",
             state->eagle_board == NULL ? "(null)" : state->eagle_board->name,
             state->eagle_board == NULL ? 0 : state->eagle_board->width,
             state->eagle_board == NULL ? 0 : state->eagle_board->height,
@@ -174,7 +176,9 @@ void generate_settings_comment(AppState *state, char **out) {
             state->flatcam_options.remove_gnd_pads,
             state->flatcam_options.silkscreen_top,
             state->flatcam_options.silkscreen_bottom,
-            state->flatcam_options.silkscreen_mirror
+            state->flatcam_options.silkscreen_mirror,
+            state->flatcam_options.drill_offset_x,
+            state->flatcam_options.drill_offset_y
     );
 }
 

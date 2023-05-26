@@ -261,6 +261,12 @@ void confirm_selection(AppState *state) {
                 case FLATCAM_SILKSCREEN_MIRROR:
                     toggle_char(&(state->flatcam_options.silkscreen_mirror), "YN");
                     break;
+                case FLATCAM_DRILL_OFFSET_X:
+                    dialog_show_double_with_callback(state, "Drill offset X", state->flatcam_options.drill_offset_x, &(state->flatcam_options.drill_offset_x), flatcam_screen_dialog_callback, false);
+                    break;
+                case FLATCAM_DRILL_OFFSET_Y:
+                    dialog_show_double_with_callback(state, "Drill offset Y", state->flatcam_options.drill_offset_y, &(state->flatcam_options.drill_offset_y), flatcam_screen_dialog_callback, false);
+                    break;
                 case FLATCAM_BUTTON_GENERATE:
                     flatcam_generate(state);
                     state->flatcam_option_selection = FLATCAM_BUTTON_BACK;
@@ -454,15 +460,17 @@ int main() {
             .flatcam_options.traces = 'B',
             .flatcam_options.mirror = 'Y',
             .flatcam_options.cutout_profile = 'Y',
-            .flatcam_options.offset_x = 12,
-            .flatcam_options.offset_y = 17.5,
+            .flatcam_options.offset_x = 36.4,
+            .flatcam_options.offset_y = 35.7,
             .flatcam_options.dia_width = 0.20188,
             .flatcam_options.feedrate_etch = "1400",
-            .flatcam_options.iterations = 8,
+            .flatcam_options.iterations = 40,
             .flatcam_options.remove_gnd_pads = 'N',
             .flatcam_options.silkscreen_top = 'N',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
+            .flatcam_options.drill_offset_x = 12,
+            .flatcam_options.drill_offset_y = 17.5,
             .eagle_board = NULL,
             .modify_results.messages = NULL,
             .leveling.measurements = NULL,
