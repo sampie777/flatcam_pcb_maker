@@ -9,6 +9,7 @@
 #include "../screen.h"
 #include "serial.h"
 #include "printer.h"
+#include "../utils.h"
 
 #define SERIAL_PORT "/dev/ttyUSB0"
 
@@ -55,9 +56,30 @@ void auto_leveling_loop(AppState *state, SerialDevice *device) {
     for (int i = 0; i < state->leveling.row_length; i++) {
         for (int j = 0; j < state->leveling.column_length; j++) {
             if (should_stop(state, device)) return;
-
             Point3D *point = &(state->leveling.measurements[i][j]);
+
+            // Move further, so when the probe comes back for backwards probing, the head movement should cancel out.
+            if (j == 0) {
+                printer_move_to(state, device, max(point->x - 7, 0), point->y, should_stop);
+            }
+
             point->z = printer_find_height_for(state, device, point->x, point->y, should_stop);
+        }
+    }
+
+    // Turn around for averaging
+    for (int i = state->leveling.row_length - 1; i >= 0; i--) {
+        for (int j = state->leveling.column_length - 1; j >= 0; j--) {
+            if (should_stop(state, device)) return;
+            Point3D *point = &(state->leveling.measurements[i][j]);
+
+            // Move further, so when the probe comes back for backwards probing, the head movement should cancel out.
+            if (j == state->leveling.column_length - 1) {
+                printer_move_to(state, device, point->x + 10, point->y, should_stop);
+            }
+
+            double z = printer_find_height_for(state, device, point->x, point->y, should_stop);
+            point->z = (point->z + z) / 2.0;
         }
     }
 
