@@ -222,7 +222,7 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     bufferAppend(screen_buffer, NEW_LINE);
 
     char buffer[64];
-    bufferAppend(screen_buffer, "Traces & drills");
+    bufferAppend(screen_buffer, "Traces");
     bufferAppend(screen_buffer, NEW_LINE);
     draw_text_field_char(screen_buffer, "Copper layer", state->flatcam_options.traces, state->flatcam_option_selection == FLATCAM_COPPER_LAYER);
     draw_text_field_char(screen_buffer, "Mirror", state->flatcam_options.mirror, state->flatcam_option_selection == FLATCAM_MIRROR);
@@ -257,6 +257,18 @@ void draw_generate_flatcam_screen(AppState *state, ScreenBuffer *screen_buffer) 
     if (state->flatcam_options.silkscreen_top == 'Y' || state->flatcam_options.silkscreen_bottom == 'Y') {
         draw_text_field_char(screen_buffer, "Mirror silkscreen", state->flatcam_options.silkscreen_mirror, state->flatcam_option_selection == FLATCAM_SILKSCREEN_MIRROR);
     }
+
+    bufferAppend(screen_buffer, NEW_LINE);
+    bufferAppend(screen_buffer, "Drills");
+    bufferAppend(screen_buffer, NEW_LINE);
+
+    sprintf(buffer, "%lf", state->flatcam_options.drill_offset_x);
+    auto_format_double_string(buffer);
+    draw_text_field_string(screen_buffer, "Drill offset X", buffer, state->flatcam_option_selection == FLATCAM_DRILL_OFFSET_X);
+
+    sprintf(buffer, "%lf", state->flatcam_options.drill_offset_y);
+    auto_format_double_string(buffer);
+    draw_text_field_string(screen_buffer, "Drill offset Y", buffer, state->flatcam_option_selection == FLATCAM_DRILL_OFFSET_Y);
 
     bufferAppend(screen_buffer, NEW_LINE);
     draw_button(screen_buffer, "Generate", state->flatcam_option_selection == FLATCAM_BUTTON_GENERATE);

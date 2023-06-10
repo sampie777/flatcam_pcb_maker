@@ -63,6 +63,8 @@ enum FlatcamOptions {
     FLATCAM_SILKSCREEN_TOP,
     FLATCAM_SILKSCREEN_BOTTOM,
     FLATCAM_SILKSCREEN_MIRROR,
+    FLATCAM_DRILL_OFFSET_X,
+    FLATCAM_DRILL_OFFSET_Y,
     FLATCAM_BUTTON_GENERATE,
     FLATCAM_BUTTON_BACK,
     FLATCAM_MAX_VALUE
@@ -101,6 +103,8 @@ typedef struct {
     char silkscreen_top;
     char silkscreen_bottom;
     char silkscreen_mirror;
+    double drill_offset_x;
+    double drill_offset_y;
 } FlatcamOptions;
 
 typedef struct {
