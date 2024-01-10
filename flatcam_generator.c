@@ -18,16 +18,17 @@ char *generate_soldermask_commands(const AppState *state) {
     char *output = malloc(sizeof(char) * 1024);
 
     sprintf(output, "\n\n"
-            "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname soldermask\n"
-            "offset soldermask %lf %lf\n"
-            "%s"
-            "isolate soldermask -dia %lf -passes %d -overlap 1 -combine 1 -outname soldermask.iso\n"
-            "\n"
-            "cncjob soldermask.iso -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
-            "write_gcode soldermask.iso_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"",
+                    "open_gerber \"%s/%s/CAMOutputs/GerberFiles/%s.gbr\" -outname soldermask\n"
+                    "offset soldermask %lf %lf\n"
+                    "%s"
+                    "isolate soldermask -dia %lf -passes %d -overlap 1 -combine 1 -outname soldermask.iso\n"
+                    "\n"
+                    "cncjob soldermask.iso -z_cut 0.0 -z_move 2.0 -feedrate %s -tooldia 0.2032\n"
+                    "write_gcode soldermask.iso_cnc \"%s/%s/CAMOutputs/flatCAM/%s\"",
 
             state->projects_path, state->project, traces_file,
-            state->flatcam_options.offset_x - state->eagle_board->min_x, state->flatcam_options.offset_y - state->eagle_board->min_y,
+            state->flatcam_options.offset_x - state->eagle_board->min_x,
+            state->flatcam_options.offset_y - state->eagle_board->min_y,
             should_mirror ? "mirror soldermask -axis Y -box profile\n" : "",
             state->flatcam_options.dia_width, state->flatcam_options.iterations,
 
@@ -50,10 +51,11 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
     char traces_top_output[512];
     traces_top_output[0] = '\0';
     if (should_silkscreen_top) {
-        sprintf(traces_top_output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_top.gbr\" -follow 1 -outname silkscreen_top\n"
-                                   "follow silkscreen_top -outname silkscreen_top.follow\n"
-                                   "offset silkscreen_top.follow %lf %lf\n"
-                                   "%s",
+        sprintf(traces_top_output,
+                "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_top.gbr\" -follow 1 -outname silkscreen_top\n"
+                "follow silkscreen_top -outname silkscreen_top.follow\n"
+                "offset silkscreen_top.follow %lf %lf\n"
+                "%s",
                 state->projects_path, state->project,
                 state->flatcam_options.offset_x - state->eagle_board->min_x,
                 state->flatcam_options.offset_y - state->eagle_board->min_y,
@@ -63,10 +65,11 @@ void generate_silkscreen_commands(const AppState *state, char **output) {
     char traces_bottom_output[512];
     traces_bottom_output[0] = '\0';
     if (should_silkscreen_bottom) {
-        sprintf(traces_bottom_output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_bottom.gbr\" -follow 1 -outname silkscreen_bottom\n"
-                                      "follow silkscreen_bottom -outname silkscreen_bottom.follow\n"
-                                      "offset silkscreen_bottom.follow %lf %lf\n"
-                                      "%s",
+        sprintf(traces_bottom_output,
+                "open_gerber \"%s/%s/CAMOutputs/GerberFiles/silkscreen_bottom.gbr\" -follow 1 -outname silkscreen_bottom\n"
+                "follow silkscreen_bottom -outname silkscreen_bottom.follow\n"
+                "offset silkscreen_bottom.follow %lf %lf\n"
+                "%s",
                 state->projects_path, state->project,
                 state->flatcam_options.offset_x - state->eagle_board->min_x,
                 state->flatcam_options.offset_y - state->eagle_board->min_y,
@@ -109,7 +112,7 @@ void generate_script(const AppState *state) {
 
     char *soldermask_output = generate_soldermask_commands(state);
 
-    char output[3072];
+    char output[3072 + strlen(silkscreen_output) + strlen(soldermask_output)];
     sprintf(output, "open_gerber \"%s/%s/CAMOutputs/GerberFiles/profile.gbr\" -outname profile\n"
                     "offset profile %lf %lf\n"
                     "%s"

@@ -466,7 +466,7 @@ int main() {
             .flatcam_options.feedrate_etch = "1400",
             .flatcam_options.iterations = 40,
             .flatcam_options.remove_gnd_pads = 'N',
-            .flatcam_options.silkscreen_top = 'N',
+            .flatcam_options.silkscreen_top = 'Y',
             .flatcam_options.silkscreen_bottom = 'N',
             .flatcam_options.silkscreen_mirror = 'N',
             .flatcam_options.drill_offset_x = 12,
